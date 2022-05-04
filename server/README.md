@@ -3,5 +3,5 @@
 ## Start
 
 ``` bash
-# install dependencies
+# start server
 flask run
