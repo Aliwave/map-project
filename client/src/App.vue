@@ -165,6 +165,12 @@ export default {
           this.regdata[0].selected = true;
         }
       }
+      this.selectedRegions = this.regdata.filter((value)=>value.selected == true);
+      // this.regdata.forEach((obj)=>{
+      //   if(obj.selected == true){
+      //     this.selectedRegions.push(obj.region);
+      //   }
+      // });
       // this.getData(this.selectedRegion, this.selectedQuestion);
     },
   },
