@@ -27,18 +27,17 @@
         >
           <!-- <l-tooltip>{{ polygon.properties.name }}</l-tooltip> -->
         </l-polygon>
-        <l-marker @click="showName('Тест')" :lat-lng="[60.504, 40]">
-          <!-- <l-icon :lat-lng="[60.504, 40]"> 
-          
-          </l-icon> -->
+        <l-marker  :lat-lng="[60.504, 40]">
+          <l-icon v-if="data !== null" :lat-lng="[60.504, 40]">
             <apexchart
               type="pie"
-              height="50px"
-              width="50px"
-              :options="chartOptions"
-              :series="series"
+              height="100px"
+              width="100px"
+              :options="getPieChartOptions(data[0].regions[0].labels)"
+              :series="data[0].regions[0].data"
             ></apexchart>
-         </l-marker>
+          </l-icon>
+        </l-marker>
         <!-- <apexchart
         style="position:absolute;"
               type="pie"
@@ -127,12 +126,64 @@ export default {
     apexchart: VueApexCharts,
     LIcon,
   },
-  props: ["geojson", "selectedReg", "selectedQuestions", "mapkey"],
+
   data() {
     return {
       series: [44, 55, 13, 43, 22],
       staticAnchor: [51.504, -0.159],
-      chartOptions: {
+      piechartOptions: {
+        colors: [
+          "#86007e",
+          "#588539",
+          "#cc9915",
+          "#523690",
+          "#c44112",
+          "#aa2048",
+          "#80419c",
+          "#9e92fa",
+          "#89204e",
+          "#e80a2c",
+          "#c4d9a8",
+          "#4f8897",
+          "#ff9a7e",
+          "#d5a916",
+          "#e56b74",
+          "#3293c6",
+          "#83e690",
+          "#bc8d9d",
+          "#8fa807",
+          "#4d84b6",
+          "#5d4319",
+          "#2a6e3e",
+          "#549466",
+          "#4d9eb3",
+          "#18b47a",
+          "#73b223",
+          "#73705b",
+          "#f2c19b",
+          "#1b4e7b",
+          "#9dae6b",
+          "#85dbc3",
+          "#42a4d8",
+          "#945d01",
+          "#de9bfe",
+          "#f5dd30",
+          "#ce5b9b",
+          "#ff0dc0",
+          "#3fdb89",
+          "#682d44",
+          "#898e7a",
+          "#6d4fd",
+          "#487e54",
+          "#fc05d3",
+          "#2d2e1c",
+          "#39371c",
+          "#4ed56f",
+          "#935b96",
+          "#1112e4",
+          "#d68b26",
+          "#282f2b",
+        ],
         chart: {
           width: 50,
           type: "pie",
@@ -183,12 +234,13 @@ export default {
       },
     };
   },
+  props: ["geojson", "selectedReg", "selectedQuestions", "data","mapkey"],
   watch: {},
   computed: {},
   methods: {
-    con(name){
-      console.log(name);
-    },
+    // con(name) {
+    //   console.log(name);
+    // },
     showName(name) {
       if (window.timer) clearTimeout(window.timer);
       if (name == "") {
@@ -215,8 +267,15 @@ export default {
       if (polygon.properties.selected) return 3;
       return 1;
     },
+    getPieChartOptions(labels) {
+      let piechartOpt = Object.assign({}, this.piechartOptions);
+      piechartOpt.labels = labels;
+      return piechartOpt;
+    },
   },
-  created() {},
+  async created() {
+    
+  },
   mounted() {
     window.addEventListener("mousemove", this.mouseIsMoving);
   },

@@ -10,6 +10,7 @@ from flask import jsonify
 import geopandas as gpd
 from io import StringIO
 import uuid
+import json
 
 db = SQLAlchemy()
 
@@ -119,20 +120,29 @@ class DefaultData:
 	"Слободской район",
 	"Кирово-Чепецкий район"
 	]
-	__path = "E:\\University\\MagaDiplom\\map_project_2_main\\server\\uploads\\maindb.json"
+	__path = "E:\\University\\MagaDiplom\\map_project_2_main\\server\\uploads\\remaster.json"
 	__geojson = gpd.read_file("E:\\University\\MagaDiplom\\map_project_2_main\\server\\backend\\regions.geojson", encoding="utf-8")
+	__maintable = pd.read_json(__path,orient="split")
+	
 	@staticmethod
 	def getDefaultQues():
-		table1 = pd.read_json(DefaultData.__path,orient="split")
-		table1 = table1.fillna("")
-		tpl = "\d+\W\s.*"
-		ques = [] 
-		for j in range(0,len(table1.axes[1])):
-			for i in range(0,50):
-				if re.match(tpl, str(table1.iat[i,j])) is not None:
-					ques.append([table1.iat[i,j],i,j])
-		queslist = np.array(ques)
-		return list(queslist[:,0])
+		# table1 = pd.read_json(DefaultData.__path,orient="split")
+		# table1 = table1.fillna("")
+		# tpl = "\d+\W\s.*"
+		# ques = [] 
+		# for j in range(0,len(table1.axes[1])):
+		# 	for i in range(0,50):
+		# 		if re.match(tpl, str(table1.iat[i,j])) is not None:
+		# 			ques.append([table1.iat[i,j],i,j])
+		# queslist = np.array(ques)
+		# return list(queslist[:,0])
+		maintable = DefaultData.__maintable
+		queslist = list(maintable)
+		queslist[3] = re.sub(r'(\s\/\/\s.*)','',queslist[3])
+		for i in range(0,len(queslist)-1):
+			queslist[i] = re.sub(r'(\s\/\/\s.*)','',queslist[i])
+		queslist = sorted(set(queslist), key=lambda d: queslist.index(d))
+		return queslist
 
 	@staticmethod
 	def getDefaultReg():
@@ -141,6 +151,88 @@ class DefaultData:
 	@staticmethod
 	def getDefaultGeoJson():
 		return DefaultData.__geojson
+
+class DataGetter:
+	__path = "E:\\University\\MagaDiplom\\map_project_2_main\\server\\uploads\\remaster.json"
+	__maintable = ""
+	__regions = []
+	__questions = []
+	__temp = ""
+
+	def __init__(self,request):
+		self.__maintable = pd.read_json(self.__path,orient="split")
+		self.__questions = request['selectedQuestions']
+		self.__regions = request['selectedRegions']
+		print(self.__regions)
+	
+	
+	def _findData(self,ques,reg=""):
+		temp = self.__maintable.copy()
+		if(reg != ""):
+			temp = temp[temp['48. Где проживаете?'] == reg['region']]
+		#поиск по вопросу
+		mainfilter = temp.filter(like=ques) #нахождение кол-ва ответов в столбцах
+		mainfilter = mainfilter.loc[:,~mainfilter.columns.duplicated()] #убираем дубликаты
+		if("//" not in mainfilter.columns[0]):#проверка на множественный вопрос
+			restable = pd.DataFrame(
+				mainfilter
+				.replace(to_replace=r'Другое:.*', value='Другое', regex=True)
+				.value_counts(dropna=True).to_frame()) #обработка вопросов с единственный столбцом ответов
+			#replace - замена по регулярному выражению
+			restable = restable.reset_index()
+			restable.columns = ['name','data'] #именование в зависимости от требований графики для единичного вопроса
+			name = restable['name'].to_list()
+			data = restable['data'].to_list()
+		else: #обработка вопросов с несколькими столбцами ответов
+			restable = pd.DataFrame()
+			for i in mainfilter.columns:
+				jj = mainfilter.filter(like=i)
+				if(jj.iloc[0][0]== 0 or pd.isna(jj.iloc[0][0]) or jj.iloc[0][0]==1):
+					restable1 = pd.DataFrame(jj
+					.replace(to_replace=r'[^0].*', value="1.0", regex=True)
+					.value_counts(dropna=True).sort_index(ascending=False).to_frame()) #dropna=True если надо убирать пустые значения
+					restable = restable.loc[:,~restable.columns.duplicated()]
+				else:
+					restable1 = pd.DataFrame(jj.value_counts(dropna=True).sort_index(ascending=False).to_frame())
+				restable1 = restable1.reset_index()
+				restable1.columns = ['values',i[i.find("//")+3:]]
+				#print(restable1)
+				restable = pd.concat([restable,restable1],axis=1)
+				restable = restable.loc[:,~restable.columns.duplicated()]
+				name = restable.columns.to_list()
+				name.pop(0)
+				data = []
+				data = pd.Series(restable.loc[restable["values"].values == 1.0].to_numpy()[0]).to_list()
+				data.pop(0)
+		dictmy = {
+			"labels":name,
+			"data":data
+		}
+		return dictmy
+	
+	def getData(self):
+		answer = []
+		tempdict = dict()
+		for ques in self.__questions:
+			tempdict['question'] = ques
+			tempregdata = []
+			for reg in self.__regions:
+				tempregdict = dict()
+				if(reg['region'] == 'Вся область'):
+					tempregdict['name'] = 'Вся область'
+					regdata = self._findData(ques)
+				else:
+					tempregdict['name'] = reg['region']
+					regdata = self._findData(ques,reg)
+				tempregdict['labels'] = regdata['labels']
+				tempregdict['data'] = regdata['data']
+				tempregdata.append(tempregdict)
+				tempregdict = dict()
+			tempdict['regions']=tempregdata
+			answer.append(tempdict)
+			tempdict = dict()
+		return json.dumps(answer,indent=4,ensure_ascii=False)
+	
 	
 
 

@@ -4,6 +4,7 @@
       <Preloader v-if="preloader"></Preloader>
     </transition>
     <div class="menu-container">
+      <!-- <button @click="showMain()" class="toggleSidebar">Вопросы</button> -->
       <button @click="showQuesList = !showQuesList;" class="toggleSidebar">Вопросы</button>
       <div>
         <label
@@ -32,6 +33,7 @@
         @selectM="selectionRegionList"
         :selectedQuestions="selectedQuestions"
         :key="mapkey"
+        :data="mainData"
       ></Map>
       <transition name="fade">
         <Regions v-if="showRegionList" :regions="regdata" @selectR="selectionRegionList"></Regions>
@@ -42,6 +44,7 @@
       :selectedReg="selectedRegions"
       :selectedQues="selectedQuestions"
       :regions="regdata"
+      :data="mainData"
     ></InfoPanel>
     <div></div>
     <!-- <Ping></Ping> -->
@@ -68,7 +71,7 @@ export default {
       geodata: null,
       regdata: null,
       queslist: null,
-      selectedRegions: ["Вся область"],
+      selectedRegions: [],
       selectedQuestions: [],
       file: "",
       msg: "",
@@ -76,12 +79,21 @@ export default {
       mapkey: 0,
       showQuesList: true,
       showRegionList: true,
+      mainData: null,
     };
   },
   methods: {
     // forceRender(){
     //   this.mapkey +=1;
     // },
+    showMain(){
+      //this.mainData[0].question получение вопроса
+      //this.mainData[0].regions[0].name получение названия региона
+      //this.mainData[0].regions[0].labels получение вариантов ответа
+      //this.mainData[0].regions[0].data получение данных
+      console.log(this.mainData[0].regions.length);
+      console.log(this.mainData.length);
+    },
     async submitFile() {
       this.file = this.$refs.file.files[0];
       let formData = new FormData();
@@ -114,11 +126,11 @@ export default {
       console.log(this.queslist);
     },
     getData(Region, Question) {
-      const path = "http://localhost:5000/data";
-      const data = { selectedQuestion: Question, selectedRegion: Region };
+      const path = "http://localhost:5000/api/data";
+      const data = { selectedQuestions: Question, selectedRegions: Region };
       axios
         .post(path, data, { headers: { "Access-Control-Allow-Origin": "*" } })
-        .then((response) => console.log(response))
+        .then((response) => this.mainData = response.data)
         .catch((error) => console.log(error));
     },
     selectQues(element, selected) {
@@ -132,6 +144,7 @@ export default {
         );
         this.mapkey--;
       }
+      this.getData(this.selectedRegions,this.selectedQuestions);
     },
 
     selectionRegionList(element, selected) {
@@ -171,7 +184,7 @@ export default {
       //     this.selectedRegions.push(obj.region);
       //   }
       // });
-      // this.getData(this.selectedRegion, this.selectedQuestion);
+      this.getData(this.selectedRegions, this.selectedQuestions);
     },
   },
   async created() {
@@ -210,6 +223,7 @@ export default {
     regions.forEach((region, index) => {
       //быть может стоит перенести обработку на сервер 🤔
       if (region == "Вся область") {
+        this.selectedRegions.push({ id: index, region: region, selected: true });
         reglist.push({ id: index, region: region, selected: true });
         return;
       }
@@ -255,6 +269,7 @@ export default {
       obj.properties["weight"] = 1;
     });
     this.geodata = geodata;
+    await this.getData(this.selectedRegions,this.selectedQuestions);
     this.preloader = false;
   },
 };

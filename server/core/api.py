@@ -1,7 +1,8 @@
+from urllib.request import Request
 from flask import Blueprint, jsonify, request, session
 import pandas as pd
 import json
-from core.models import User, DBUpload, DefaultData
+from core.models import User, DBUpload, DefaultData, DataGetter
 import uuid
 
 
@@ -30,6 +31,12 @@ def getQuestions():
 	# if(len(queslist) != 0):
 	# 	return jsonify(list(queslist[:,0]))
 	return jsonify(DefaultData.getDefaultQues())
+
+@api.route('/data', methods=['POST'])
+def getData():
+	requestdata = request.get_json()
+	data = DataGetter(requestdata)
+	return data.getData()
 
 
 @api.route('hello/<string:name>/')
