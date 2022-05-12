@@ -189,10 +189,14 @@ class DataGetter:
 					restable1 = pd.DataFrame(jj
 					.replace(to_replace=r'[^0].*', value="1.0", regex=True)
 					.value_counts(dropna=True).sort_index(ascending=False).to_frame()) #dropna=True если надо убирать пустые значения
-					restable = restable.loc[:,~restable.columns.duplicated()]
 				else:
 					restable1 = pd.DataFrame(jj.value_counts(dropna=True).sort_index(ascending=False).to_frame())
 				restable1 = restable1.reset_index()
+				if(restable1.iat[0,0] == 0):
+					restable1 = pd.DataFrame({
+						'name': [1.0],
+						'column':[0]
+					})
 				restable1.columns = ['values',i[i.find("//")+3:]]
 				#print(restable1)
 				restable = pd.concat([restable,restable1],axis=1)
