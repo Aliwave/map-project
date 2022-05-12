@@ -8,6 +8,9 @@
 # install dependencies
 npm install
 
+#write your server url in config/dev.env.js and config/prod.env.js
+SERVER_URL: '"you_url"'
+
 # serve with hot reload at localhost:8080
 npm run dev
 
