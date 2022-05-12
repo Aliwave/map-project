@@ -99,7 +99,7 @@ export default {
       let formData = new FormData();
       formData.append("file", this.file);
       await axios
-        .post("http://127.0.0.1:5000/api/uploaddb", formData, {
+        .post(process.env.VUE_APP_ROOT+"/uploaddb", formData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
@@ -126,7 +126,7 @@ export default {
       console.log(this.queslist);
     },
     getData(Region, Question) {
-      const path = "http://localhost:5000/api/data";
+      const path = process.env.SERVER_URL+"/data";
       const data = { selectedQuestions: Question, selectedRegions: Region };
       axios
         .post(path, data, { headers: { "Access-Control-Allow-Origin": "*" } })
@@ -189,7 +189,7 @@ export default {
   },
   async created() {
     //получение данных и их обработка👌
-    const path = "http://localhost:5000/api/regions";
+    const path = process.env.SERVER_URL+"/regions";
     let regions = [];
     await axios
       .get(path)
@@ -199,7 +199,7 @@ export default {
       .catch((error) => {
         console.log(error);
       });
-    const path1 = "http://localhost:5000/api/questions";
+    const path1 = process.env.SERVER_URL+"/questions";
     let questions = [];
     await axios
       .get(path1)
@@ -209,7 +209,7 @@ export default {
       .catch((error) => {
         console.log(error);
       });
-    const path2 = "http://localhost:5000/api/geojson";
+    const path2 = process.env.SERVER_URL+"/geojson";
     let geodata = [];
     await axios
       .get(path2)

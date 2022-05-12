@@ -120,8 +120,8 @@ class DefaultData:
 	"Слободской район",
 	"Кирово-Чепецкий район"
 	]
-	__path = "E:\\University\\MagaDiplom\\map_project_2_main\\server\\uploads\\remaster.json"
-	__geojson = gpd.read_file("E:\\University\\MagaDiplom\\map_project_2_main\\server\\backend\\regions.geojson", encoding="utf-8")
+	__path = os.path.dirname(os.path.dirname(__file__))+"\\uploads\\remaster.json"
+	__geojson = gpd.read_file(os.path.dirname(os.path.dirname(__file__))+"\\backend\\regions.geojson", encoding="utf-8")
 	__maintable = pd.read_json(__path,orient="split")
 	
 	@staticmethod
@@ -136,6 +136,7 @@ class DefaultData:
 		# 			ques.append([table1.iat[i,j],i,j])
 		# queslist = np.array(ques)
 		# return list(queslist[:,0])
+		print(os.path.dirname(os.path.dirname(__file__)))
 		maintable = DefaultData.__maintable
 		queslist = list(maintable)
 		queslist[3] = re.sub(r'(\s\/\/\s.*)','',queslist[3])
@@ -153,7 +154,7 @@ class DefaultData:
 		return DefaultData.__geojson
 
 class DataGetter:
-	__path = "E:\\University\\MagaDiplom\\map_project_2_main\\server\\uploads\\remaster.json"
+	__path = os.path.dirname(os.path.dirname(__file__))+"\\uploads\\remaster.json"
 	__maintable = ""
 	__regions = []
 	__questions = []
@@ -163,7 +164,6 @@ class DataGetter:
 		self.__maintable = pd.read_json(self.__path,orient="split")
 		self.__questions = request['selectedQuestions']
 		self.__regions = request['selectedRegions']
-		print(self.__regions)
 	
 	
 	def _findData(self,ques,reg=""):
