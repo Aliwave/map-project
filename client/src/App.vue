@@ -103,7 +103,6 @@ export default {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-          //надо придумать как обновлять вопросы после загрузки базы данных!!!
         })
         .then((res) => {
           console.log(res);
@@ -126,7 +125,7 @@ export default {
       console.log(this.queslist);
     },
     getData(Region, Question) {
-      const path = process.env.SERVER_URL+"/data";
+      const path = process.env.SERVER_URL+"/api/data";
       const data = { selectedQuestions: Question, selectedRegions: Region };
       axios
         .post(path, data, { headers: { "Access-Control-Allow-Origin": "*" } })
@@ -189,7 +188,7 @@ export default {
   },
   async created() {
     //получение данных и их обработка👌
-    const path = process.env.SERVER_URL+"/regions";
+    const path = process.env.SERVER_URL+"/api/regions";
     let regions = [];
     await axios
       .get(path)
@@ -199,7 +198,7 @@ export default {
       .catch((error) => {
         console.log(error);
       });
-    const path1 = process.env.SERVER_URL+"/questions";
+    const path1 = process.env.SERVER_URL+"/api/questions";
     let questions = [];
     await axios
       .get(path1)
@@ -209,7 +208,7 @@ export default {
       .catch((error) => {
         console.log(error);
       });
-    const path2 = process.env.SERVER_URL+"/geojson";
+    const path2 = process.env.SERVER_URL+"/api/geojson";
     let geodata = [];
     await axios
       .get(path2)

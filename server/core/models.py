@@ -81,8 +81,8 @@ class DefaultData:
 	"Опаринский район",
 	"Подосиновский район",
 	"Пижанский район",
-	"Оричевский район",
-	"Кумёнский район",
+	"Орический район",
+	"Куменский район",
 	"г. Котельнич",#"городской округ Котельнич"
 	"Орловский район",
 	"Даровской район",
@@ -136,7 +136,6 @@ class DefaultData:
 		# 			ques.append([table1.iat[i,j],i,j])
 		# queslist = np.array(ques)
 		# return list(queslist[:,0])
-		print(os.path.dirname(os.path.dirname(__file__)))
 		maintable = DefaultData.__maintable
 		queslist = list(maintable)
 		queslist[3] = re.sub(r'(\s\/\/\s.*)','',queslist[3])
@@ -164,7 +163,6 @@ class DataGetter:
 		self.__maintable = pd.read_json(self.__path,orient="split")
 		self.__questions = request['selectedQuestions']
 		self.__regions = request['selectedRegions']
-	
 	
 	def _findData(self,ques,reg=""):
 		temp = self.__maintable.copy()
@@ -202,13 +200,17 @@ class DataGetter:
 				name = restable.columns.to_list()
 				name.pop(0)
 				data = []
-				data = pd.Series(restable.loc[restable["values"].values == 1.0].to_numpy()[0]).to_list()
-				data.pop(0)
-		dictmy = {
+				print(restable)
+				if(restable.to_numpy()[0][0] == 1):
+					data = pd.Series(restable.loc[restable["values"].values == 1.0].to_numpy()[0]).to_list()
+					data.pop(0)
+				else: 
+					data = [0]
+		mydict = {
 			"labels":name,
 			"data":data
 		}
-		return dictmy
+		return mydict
 	
 	def getData(self):
 		answer = []
