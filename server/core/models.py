@@ -120,8 +120,8 @@ class DefaultData:
 	"Слободской район",
 	"Кирово-Чепецкий район"
 	]
-	__path = os.path.dirname(os.path.dirname(__file__))+"\\uploads\\remaster.json"
-	__geojson = gpd.read_file(os.path.dirname(os.path.dirname(__file__))+"\\backend\\regions.geojson", encoding="utf-8")
+	__path = os.path.dirname(os.path.dirname(__file__))+"/uploads/remaster.json"
+	__geojson = gpd.read_file(os.path.dirname(os.path.dirname(__file__))+"/backend/regions.geojson", encoding="utf-8")
 	__maintable = pd.read_json(__path,orient="split")
 	
 	@staticmethod
@@ -153,7 +153,7 @@ class DefaultData:
 		return DefaultData.__geojson
 
 class DataGetter:
-	__path = os.path.dirname(os.path.dirname(__file__))+"\\uploads\\remaster.json"
+	__path = os.path.dirname(os.path.dirname(__file__))+"/uploads/remaster.json"
 	__maintable = ""
 	__regions = []
 	__questions = []
@@ -204,7 +204,6 @@ class DataGetter:
 				name = restable.columns.to_list()
 				name.pop(0)
 				data = []
-				print(restable)
 				if(restable.to_numpy()[0][0] == 1):
 					data = pd.Series(restable.loc[restable["values"].values == 1.0].to_numpy()[0]).to_list()
 					data.pop(0)

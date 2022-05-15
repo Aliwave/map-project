@@ -1,10 +1,8 @@
-
-
 from ntpath import join
 from pickle import TRUE
 from posixpath import dirname
 from dotenv import load_dotenv
-
+import os
 
 
 
@@ -14,7 +12,7 @@ class BaseConfig(object):
 	SQLALCHEMY_TRACK_MODIFICATIONS = False
 	SECRET_KEY = 'the quick brown fox jumps over the lazy   dog'
 	#SESSION_TYPE = "filesystem"
-	UPLOAD_FOLDER = "E:\\University\\MagaDiplom\\map_project_2_test\\server\\uploads\\"
+	UPLOAD_FOLDER = os.path.dirname(os.path.dirname(__file__))+"/uploads/"
 	ALLOWED_EXTENSIONS = {'geojson', 'csv','xlsx'}
 	FLASK_ENV ='development'
 	DEVELOPMENT = True
