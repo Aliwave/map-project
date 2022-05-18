@@ -6,7 +6,7 @@
     <div class="menu-container">
       <!-- <button @click="showMain()" class="toggleSidebar">Вопросы</button> -->
       <button @click="showQuesList = !showQuesList;" class="toggleSidebar">Вопросы</button>
-      <div>
+      <!-- <div>
         <label
           >File
           <input
@@ -19,7 +19,7 @@
           <button @click="submitFile()">Submit</button>
         </label>
         {{ msg }}
-      </div>
+      </div> -->
       <button @click="showRegionList = !showRegionList;" class="toggleSidebar">Районы</button>
     </div>
     <div class="map-container">
@@ -32,8 +32,10 @@
         :selectedReg="selectedRegions"
         @selectM="selectionRegionList"
         :selectedQuestions="selectedQuestions"
-        :key="mapkey"
         :data="mainData"
+        :question="oneQuestion"
+        ref="mapComp"
+        :colors="chartColors"
       ></Map>
       <transition name="fade">
         <Regions v-if="showRegionList" :regions="regdata" @selectR="selectionRegionList"></Regions>
@@ -45,6 +47,9 @@
       :selectedQues="selectedQuestions"
       :regions="regdata"
       :data="mainData"
+      :mapkey="mapkey"
+      @oneQuesChange="oneQuestionChangeMain"
+      :colors="chartColors"
     ></InfoPanel>
     <div></div>
     <!-- <Ping></Ping> -->
@@ -73,13 +78,66 @@ export default {
       queslist: null,
       selectedRegions: [],
       selectedQuestions: [],
+      oneQuestion: "",
       file: "",
       msg: "",
       preloader: true,
       mapkey: 0,
       showQuesList: true,
       showRegionList: true,
-      mainData: null,
+      mainData: {},
+      chartColors:[
+        "#86007e",
+        "#588539",
+        "#cc9915",
+        "#523690",
+        "#c44112",
+        "#aa2048",
+        "#80419c",
+        "#9e92fa",
+        "#89204e",
+        "#e80a2c",
+        "#c4d9a8",
+        "#4f8897",
+        "#ff9a7e",
+        "#d5a916",
+        "#e56b74",
+        "#3293c6",
+        "#83e690",
+        "#bc8d9d",
+        "#8fa807",
+        "#4d84b6",
+        "#5d4319",
+        "#2a6e3e",
+        "#549466",
+        "#4d9eb3",
+        "#18b47a",
+        "#73b223",
+        "#73705b",
+        "#f2c19b",
+        "#1b4e7b",
+        "#9dae6b",
+        "#85dbc3",
+        "#42a4d8",
+        "#945d01",
+        "#de9bfe",
+        "#f5dd30",
+        "#ce5b9b",
+        "#ff0dc0",
+        "#3fdb89",
+        "#682d44",
+        "#898e7a",
+        "#6d4fd",
+        "#487e54",
+        "#fc05d3",
+        "#2d2e1c",
+        "#39371c",
+        "#4ed56f",
+        "#935b96",
+        "#1112e4",
+        "#d68b26",
+        "#282f2b",
+      ],
     };
   },
   methods: {
@@ -124,18 +182,25 @@ export default {
         });
       console.log(this.queslist);
     },
-    getData(Region, Question) {
+
+    async getData(Region, Question) {
       const path = process.env.SERVER_URL+"/api/data";
       const data = { selectedQuestions: Question, selectedRegions: Region };
-      axios
+      await axios
         .post(path, data, { headers: { "Access-Control-Allow-Origin": "*" } })
-        .then((response) => this.mainData = response.data)
+        .then((response) => {
+          this.mainData[this.selectedQuestions[this.selectedQuestions.length-1]] = response.data;
+          this.mapkey++;
+          console.log(this.mainData);
+          })
         .catch((error) => console.log(error));
     },
+
     selectQues(element, selected) {
       if (selected == true) {
         this.selectedQuestions.push(element);
         this.mapkey++;
+        
       } else {
         this.selectedQuestions.splice(
           this.selectedQuestions.indexOf(element),
@@ -143,7 +208,9 @@ export default {
         );
         this.mapkey--;
       }
-      this.getData(this.selectedRegions,this.selectedQuestions);
+      if(this.mainData[element]===undefined){
+        this.getData(this.regdata,this.selectedQuestions);
+      }
     },
 
     selectionRegionList(element, selected) {
@@ -183,8 +250,14 @@ export default {
       //     this.selectedRegions.push(obj.region);
       //   }
       // });
-      this.getData(this.selectedRegions, this.selectedQuestions);
+      // this.mapkey++;
+      // this.getData(this.selectedRegions, this.selectedQuestions);
     },
+    oneQuestionChangeMain(oneQues){
+      this.oneQuestion = oneQues;
+      console.log(this.oneQuestion);
+      this.$refs.mapComp.updateMap(oneQues);
+    }
   },
   async created() {
     //получение данных и их обработка👌
@@ -235,13 +308,14 @@ export default {
     questions.forEach((question, index) => {
       if (index == 0) {
         this.selectedQuestions.push(question);
+        this.oneQuestion = question;
         queslist.push({ id: index, question: question, selected: true });
         return;
       }
       queslist.push({ id: index, question: question, selected: false });
     });
     this.queslist = queslist;
-
+    await this.getData(this.regdata,this.selectedQuestions);
     geodata = JSON.parse(geodata);
     geodata.features.forEach((obj) => {
       switch (obj.properties.name) {
@@ -259,6 +333,13 @@ export default {
           break;
         case "городской округ Слободской":
           obj.properties.name = "г. Слободской";
+          break;
+        case "Кумёнский район":
+          obj.properties.name = "Куменский район";
+          break;
+        case "Фалёнский район":
+          obj.properties.name = "Фаленский район";
+          break;
         default:
           obj.properties.name = obj.properties.name;
           break;
@@ -267,10 +348,14 @@ export default {
       obj.properties["color"] = "blue";
       obj.properties["weight"] = 1;
     });
-    this.geodata = geodata;
-    await this.getData(this.selectedRegions,this.selectedQuestions);
+    this.geodata = geodata;  
     this.preloader = false;
   },
+  mounted(){
+    this.$nextTick(()=>{
+      this.mapkey++;
+    });
+  }
 };
 </script>
 

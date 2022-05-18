@@ -1,31 +1,65 @@
 <template>
-  <div class="info-container">
+  <div :mapkey="mapkey" v-if="data !== undefined" class="info-container">
     <div class="info-header">
       <h2>Статистика:</h2>
     </div> 
     <div v-if="data !== null" class="info-lists-wrapper">
       <!-- Выбор одного вопроса и одного района или Выбор одного вопроса и всей области -->
-      <div v-if="data.length == 1 && data[0].regions.length == 1" class="info-list-block"> 
+      <!-- <div v-if="data.length == 1 && data[0].regions.length == 1" class="info-list-block"> 
         <div id="chart">
           <p>{{data[0].question}}</p>
           <apexchart type="pie" width="1200px" height="240px"
           :options="getPieChartOptions(data[0].regions[0].labels)" 
           :series="data[0].regions[0].data"></apexchart>
         </div>
+      </div> -->
+
+      <!-- Выбор одного вопроса и одного района или Выбор одного вопроса и всей области -->
+      <div v-if="selectedQues.length == 1 && selectedReg.length == 1 && data !== undefined" class="info-list-block"> 
+        <div v-if="data[selectedQues[0]] !== null" id="chart">
+          <p>{{selectedQues[0]}} (<span class="toMap__link" @click="oneQuestionChange(selectedQues[0])">на карту</span>)</p>
+          <apexchart v-if="data[selectedQues[0]] != undefined" type="pie" width="1200px" height="240px"
+          :options="getPieChartOptions(data[selectedQues[0]][selectedReg[0].region].labels)" 
+          :series="data[selectedQues[0]][selectedReg[0].region].data"></apexchart>
+        </div>
+        <div v-else>Загрузка...</div>
       </div>
 
       <!-- Выбор нескольких вопросов и одного района или Выбор нескольких вопросов и всей области -->
-      <div v-if="data.length > 1 && data[0].regions.length == 1" class="info-list-block"> 
-        <div v-for="(elem,index) in data" :key="index" id="chart">
-          <p>{{elem.question}}</p>
-          <apexchart type="pie" :width="`${1200}px`" height="290px" 
-          :options="getPieChartOptions(elem.regions[0].labels)" 
-          :series="elem.regions[0].data"></apexchart>
+      <div v-if="selectedQues.length > 1 && selectedReg.length == 1 && data !== undefined" class="info-list-block"> 
+        <div v-for="(elem,index) in selectedQues" :key="index" id="chart">
+          <p v-if="data[elem] !== undefined">{{elem}} (<a class="toMap__link" @click="oneQuestionChange(elem)">на карту</a>)</p>
+          <p v-else>Загрузка...</p>
+          <apexchart v-if="data[elem] !== undefined" type="pie" :width="`${1200}px`" height="290px" 
+          :options="getPieChartOptions(data[elem][selectedReg[0].region].labels)" 
+          :series="data[elem][selectedReg[0].region].data"></apexchart>
         </div>
       </div>
-
       <!-- Выбор одного вопроса и нескольких районов или Выбор нескольких вопросов и нескольких районов -->
-      <div v-if="data[0].regions.length > 1 && data.length >= 1" class="info-list-block multi-ques-block">
+      <div v-if="selectedReg.length > 1 && selectedQues.length >= 1" class="info-list-block multi-ques-block">
+        <div v-for="(quesItem,index) in selectedQues" :key="index" class="info-list-block reg-list-block">
+          <p v-if="data[quesItem] !== undefined">{{quesItem}} (<a class="toMap__link" @click="oneQuestionChange(quesItem)">на карту</a>)</p>
+          <p v-else>Загрузка...</p>
+          <ul v-if="data[quesItem] !== undefined" class="info-list">
+            <li v-for="(regItem,index) in selectedReg" :key="index">
+              {{regItem.region}}
+              <span class="mini-bar"
+                ><apexchart
+                  type="bar"
+                  height="15px"
+                  width="100%"
+                  :options="chartOptions"
+                  :series="getBarSeries(
+                    data[quesItem][regItem.region].labels,data[quesItem][regItem.region].data
+                  )"
+                ></apexchart
+              ></span>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <!-- Выбор одного вопроса и нескольких районов или Выбор нескольких вопросов и нескольких районов -->
+      <!-- <div v-if="selectedReg.length > 1 && selectedQues.length >= 1" class="info-list-block multi-ques-block">
         <div v-for="(quesItem,index) in data" :key="index" class="info-list-block reg-list-block">
           <p>{{quesItem.question}}</p>
           <ul class="info-list">
@@ -43,7 +77,7 @@
             </li>
           </ul>
         </div>
-      </div>
+      </div> -->
     </div>
   </div>
 </template>
@@ -250,16 +284,19 @@ export default {
         },
         stroke: {
           show: true,
-          width: 2,
+          width: 0,
         },
       },
     };
   },
-  props: ["queslist", "regions", "selectedReg", "selectedQues","data"],
+  props: ["queslist", "regions", "selectedReg", "selectedQues","data","mapkey"],
   methods: {
     getPieChartOptions(labels){
       let piechartOpt = Object.assign({}, this.piechartOptions);;
       piechartOpt.labels = labels;
+      if(labels[0]=="Нет данных"){
+        piechartOpt.colors = ['#ccc'];
+      }
       return piechartOpt;
     },
     getBarSeries(labels,series){
@@ -272,9 +309,12 @@ export default {
       }
       return temp;
     },
-    getreg() {
-      console.log(this.selectedReg);
+    oneQuestionChange(oneQues){
+      this.$emit("oneQuesChange",oneQues);
     },
+    // getreg() {
+    //   console.log(this.selectedReg);
+    // },
   },
   created() {
     //this.getMessage();
@@ -284,6 +324,9 @@ export default {
 };
 </script>
 <style>
+p{
+  margin: 0;
+}
 .info-header {
   display: flex;
   justify-content: flex-start;
@@ -299,7 +342,8 @@ export default {
   margin: 0;
   padding: 0;
   padding-left: 12px;
-  padding-bottom: 5px;
+  padding-bottom: 2px;
+  line-height: 20px;
 }
 
 .info-list {
@@ -374,4 +418,16 @@ export default {
 /* .multi-ques-block .chart {
   max-width: 450px;
 } */
+
+.toMap__link {
+  text-decoration: underline;
+  cursor:pointer;
+  color: #ffc0cb;
+}
+.toMap__link:hover {
+  color: #d6a3ab;
+}
+.toMap__link:active {
+  color: #b8989d;
+}
 </style>
