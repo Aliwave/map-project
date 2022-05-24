@@ -1,6 +1,6 @@
 # Client
 
-> vue
+> folder client VueCli
 
 ## Build Setup
 
