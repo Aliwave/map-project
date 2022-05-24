@@ -1,9 +1,9 @@
 <template>
-  <div :mapkey="mapkey" v-if="data !== undefined" class="info-container">
+  <div :mapkey="mapkey" class="info-container">
     <div class="info-header">
       <h2>Статистика:</h2>
-    </div> 
-    <div v-if="data !== null" class="info-lists-wrapper">
+    </div>
+    <div class="info-lists-wrapper">
       <!-- Выбор одного вопроса и одного района или Выбор одного вопроса и всей области -->
       <!-- <div v-if="data.length == 1 && data[0].regions.length == 1" class="info-list-block"> 
         <div id="chart">
@@ -15,69 +15,133 @@
       </div> -->
 
       <!-- Выбор одного вопроса и одного района или Выбор одного вопроса и всей области -->
-      <div v-if="selectedQues.length == 1 && selectedReg.length == 1 && data !== undefined" class="info-list-block"> 
-        <div v-if="data[selectedQues[0]] !== null" id="chart">
-          <p>{{selectedQues[0]}} (<span class="toMap__link" @click="oneQuestionChange(selectedQues[0])">на карту</span>)</p>
-          <apexchart v-if="data[selectedQues[0]] != undefined" type="pie" width="1200px" height="240px"
-          :options="getPieChartOptions(data[selectedQues[0]][selectedReg[0].region].labels)" 
-          :series="data[selectedQues[0]][selectedReg[0].region].data"></apexchart>
+      <div
+        v-if="
+          selectedQues.length >= 1 &&
+          selectedReg.length == 1 &&
+          data !== undefined && 
+          selectedReg[0].region == 'Вся область'
+        "
+        class="info-list-block"
+      >
+        <div v-for="(elem, index) in selectedQues" :key="index" id="chart">
+          <p v-if="data[elem] !== undefined">
+            {{ elem }} (<a class="toMap__link" @click="oneQuestionChange(elem)"
+              >на карту</a
+            >)
+          </p>
+          <apexchart
+            v-if="data[elem] !== undefined"
+            type="pie"
+            :width="`${1200}px`"
+            height="290px"
+            :options="
+              getPieChartOptions(data[elem][selectedReg[0].region].labels)
+            "
+            :series="data[elem][selectedReg[0].region].data"
+            @dataPointSelection="
+              (event, chartContext, config) => {
+                dataPiePointSelection(
+                  event,
+                  chartContext,
+                  config,
+                  elem,
+                  selectedReg[0].region
+                );
+              }
+            "
+          ></apexchart>
         </div>
-        <div v-else>Загрузка...</div>
       </div>
 
       <!-- Выбор нескольких вопросов и одного района или Выбор нескольких вопросов и всей области -->
-      <div v-if="selectedQues.length > 1 && selectedReg.length == 1 && data !== undefined" class="info-list-block"> 
-        <div v-for="(elem,index) in selectedQues" :key="index" id="chart">
-          <p v-if="data[elem] !== undefined">{{elem}} (<a class="toMap__link" @click="oneQuestionChange(elem)">на карту</a>)</p>
-          <p v-else>Загрузка...</p>
-          <apexchart v-if="data[elem] !== undefined" type="pie" :width="`${1200}px`" height="290px" 
-          :options="getPieChartOptions(data[elem][selectedReg[0].region].labels)" 
-          :series="data[elem][selectedReg[0].region].data"></apexchart>
+      <div
+        v-if="
+          selectedQues.length >= 1 &&
+          selectedReg.length == 1 &&
+          data !== undefined && 
+          selectedReg[0].region != 'Вся область'
+        "
+        class="info-list-block"
+      >
+        <div v-for="(elem, index) in selectedQues" :key="index" id="chart">
+          <p v-if="data[elem] !== undefined">
+            {{ elem }} (<a class="toMap__link" @click="oneQuestionChange(elem)"
+              >на карту</a
+            >)
+          </p>
+          <apexchart
+            v-if="data[elem] !== undefined"
+            type="pie"
+            :width="`${1200}px`"
+            height="290px"
+            :options="
+              getPieChartOptions(data[elem][selectedReg[0].region].labels)
+            "
+            :series="data[elem][selectedReg[0].region].data"
+            @dataPointSelection="
+              (event, chartContext, config) => {
+                dataPiePointSelection(
+                  event,
+                  chartContext,
+                  config,
+                  elem,
+                  selectedReg[0].region
+                );
+              }
+            "
+          ></apexchart>
         </div>
       </div>
       <!-- Выбор одного вопроса и нескольких районов или Выбор нескольких вопросов и нескольких районов -->
-      <div v-if="selectedReg.length > 1 && selectedQues.length >= 1" class="info-list-block multi-ques-block">
-        <div v-for="(quesItem,index) in selectedQues" :key="index" class="info-list-block reg-list-block">
-          <p v-if="data[quesItem] !== undefined">{{quesItem}} (<a class="toMap__link" @click="oneQuestionChange(quesItem)">на карту</a>)</p>
-          <p v-else>Загрузка...</p>
+      <div
+        v-if="selectedReg.length >= 1 && selectedQues.length >= 1 && this.multiple == true"
+        class="info-list-block multi-ques-block"
+      >
+        <div
+          v-for="(quesItem, index) in selectedQues"
+          :key="index"
+          class="info-list-block reg-list-block"
+        >
+          <p v-if="data[quesItem] !== undefined">
+            {{ quesItem }} (<a
+              class="toMap__link"
+              @click="oneQuestionChange(quesItem)"
+              >на карту</a
+            >)
+          </p>
           <ul v-if="data[quesItem] !== undefined" class="info-list">
-            <li v-for="(regItem,index) in selectedReg" :key="index">
-              {{regItem.region}}
+            <li v-for="regItem in selectedReg" :key="regItem.id">
+              {{ regItem.region }}
               <span class="mini-bar"
                 ><apexchart
                   type="bar"
                   height="15px"
                   width="100%"
                   :options="chartOptions"
-                  :series="getBarSeries(
-                    data[quesItem][regItem.region].labels,data[quesItem][regItem.region].data
-                  )"
+                  :series="
+                    getBarSeries(
+                      data[quesItem][regItem.region].labels,
+                      data[quesItem][regItem.region].data
+                    )
+                  "
+                  @dataPointSelection="
+                    (event, chartContext, config) => {
+                      dataBarPointSelection(
+                        event,
+                        chartContext,
+                        config,
+                        quesItem,
+                        regItem.region
+                      );
+                    }
+                  "
                 ></apexchart
               ></span>
             </li>
           </ul>
         </div>
       </div>
-      <!-- Выбор одного вопроса и нескольких районов или Выбор нескольких вопросов и нескольких районов -->
-      <!-- <div v-if="selectedReg.length > 1 && selectedQues.length >= 1" class="info-list-block multi-ques-block">
-        <div v-for="(quesItem,index) in data" :key="index" class="info-list-block reg-list-block">
-          <p>{{quesItem.question}}</p>
-          <ul class="info-list">
-            <li v-for="(regItem,index) in quesItem.regions" :key="index">
-              {{regItem.name}}
-              <span class="mini-bar"
-                ><apexchart
-                  type="bar"
-                  height="15px"
-                  width="100%"
-                  :options="chartOptions"
-                  :series="getBarSeries(regItem.labels,regItem.data)"
-                ></apexchart
-              ></span>
-            </li>
-          </ul>
-        </div>
-      </div> -->
     </div>
   </div>
 </template>
@@ -108,15 +172,28 @@ export default {
           },
           offsetX: 0,
           offsetY: 0,
+          events: {
+            dataPointSelection: function (event, chartContext, config) {
+              // console.log(
+              //   config.w.config.series[config.dataPointIndex].data[0]
+              // );
+              // console.log(config.w.config.series[config.dataPointIndex].name);
+              // console.log(config.w.config.labels[config.dataPointIndex]);
+              //console.log("Test");
+            },
+          },
+        },
+        theme: {
+          mode: "dark",
         },
         dataLabels: {
           enabled: true,
-          formatter: function(val,opts){
-            if(val < 2){
+          formatter: function (val, opts) {
+            if (val < 2) {
               return "";
             }
-            return val.toFixed(1)+"%";
-          }
+            return val.toFixed(1) + "%";
+          },
         },
         plotOptions: {
           bar: {
@@ -141,138 +218,56 @@ export default {
           },
         },
         fill: {
-          colors: [
-            "#86007e",
-            "#588539",
-            "#cc9915",
-            "#523690",
-            "#c44112",
-            "#aa2048",
-            "#80419c",
-            "#9e92fa",
-            "#89204e",
-            "#e80a2c",
-            "#c4d9a8",
-            "#4f8897",
-            "#ff9a7e",
-            "#d5a916",
-            "#e56b74",
-            "#3293c6",
-            "#83e690",
-            "#bc8d9d",
-            "#8fa807",
-            "#4d84b6",
-            "#5d4319",
-            "#2a6e3e",
-            "#549466",
-            "#4d9eb3",
-            "#18b47a",
-            "#73b223",
-            "#73705b",
-            "#f2c19b",
-            "#1b4e7b",
-            "#9dae6b",
-            "#85dbc3",
-            "#42a4d8",
-            "#945d01",
-            "#de9bfe",
-            "#f5dd30",
-            "#ce5b9b",
-            "#ff0dc0",
-            "#3fdb89",
-            "#682d44",
-            "#898e7a",
-            "#6d4fd",
-            "#487e54",
-            "#fc05d3",
-            "#2d2e1c",
-            "#39371c",
-            "#4ed56f",
-            "#935b96",
-            "#1112e4",
-            "#d68b26",
-            "#282f2b",
-          ],
+          //type: "pattern",
+          colors: this.colors,
           opacity: 1,
+        },
+        states: {
+          active: {
+            allowMultipleDataPointsSelection: true,
+            filter:{
+              type:"darken",
+              value: 0.15,
+            }
+          },
+          hover: {
+            filter: {
+              type: "none",
+              value: 0.05,
+            },
+          },
         },
       },
       piechartOptions: {
-        colors: [
-          "#86007e",
-          "#588539",
-          "#cc9915",
-          "#523690",
-          "#c44112",
-          "#aa2048",
-          "#80419c",
-          "#9e92fa",
-          "#89204e",
-          "#e80a2c",
-          "#c4d9a8",
-          "#4f8897",
-          "#ff9a7e",
-          "#d5a916",
-          "#e56b74",
-          "#3293c6",
-          "#83e690",
-          "#bc8d9d",
-          "#8fa807",
-          "#4d84b6",
-          "#5d4319",
-          "#2a6e3e",
-          "#549466",
-          "#4d9eb3",
-          "#18b47a",
-          "#73b223",
-          "#73705b",
-          "#f2c19b",
-          "#1b4e7b",
-          "#9dae6b",
-          "#85dbc3",
-          "#42a4d8",
-          "#945d01",
-          "#de9bfe",
-          "#f5dd30",
-          "#ce5b9b",
-          "#ff0dc0",
-          "#3fdb89",
-          "#682d44",
-          "#898e7a",
-          "#6d4fd",
-          "#487e54",
-          "#fc05d3",
-          "#2d2e1c",
-          "#39371c",
-          "#4ed56f",
-          "#935b96",
-          "#1112e4",
-          "#d68b26",
-          "#282f2b",
-        ],
+        colors: this.colors,
         chart: {
-          width: "100%",
+          width: "1200px",
           // type: "pie",
           background: "#282b38",
           offsetX: -50,
         },
-        // responsive: [{
-        //   breakpoint: 480,
-        //   options: {
-        //     chart: {
-        //       width: 200
-        //     },
-        //     legend: {
-        //       position: 'bottom'
-        //     }
-        //   }
-        // }],
         theme: {
           mode: "dark",
+        },
+        states: {
+          active: {
+            allowMultipleDataPointsSelection: true,
+            filter:{
+              type:"darken",
+              value: 0.15,
+            }
+          },
+          hover: {
+            filter: {
+              type: "none",
+              value: 0.05,
+            },
+          },
         },
         labels: [""],
         tooltip: {
           enabled: true,
-          fillSeriesColor: true,
+          fillSeriesColor: false,
         },
         legend: {
           show: true,
@@ -286,31 +281,87 @@ export default {
           show: true,
           width: 0,
         },
+        // fill: {
+        //   type: "pattern",
+        //   pattern: {
+        //     style: "verticalLines",
+        //     width: 6,
+        //     height: 6,
+        //     strokeWidth: 2,
+        //   },
+        // },
       },
+      infodata:{},
     };
   },
-  props: ["queslist", "regions", "selectedReg", "selectedQues","data","mapkey"],
+  // props: [
+  //   "queslist",
+  //   "regions",
+  //   "selectedReg",
+  //   "selectedQues",
+  //   "data",
+  //   "mapkey",
+  //   "colors",
+  //   "multiple",
+  //   "chartkey"
+  // ],
+    props: {
+    queslist:Array,
+    regions:Array,
+    selectedReg:Array,
+    selectedQues:Array,
+    data:Object,
+    mapkey:Number,
+    colors:Array,
+    multiple:Boolean,
+    chartkey:Number
+    },
   methods: {
-    getPieChartOptions(labels){
-      let piechartOpt = Object.assign({}, this.piechartOptions);;
+    dataPiePointSelection(
+      event,
+      chartContext,
+      config,
+      selectedQuestion,
+      selectedReg
+    ) {
+      let data = config.w.config.series[config.dataPointIndex];
+      let label = config.w.config.labels[config.dataPointIndex];
+      this.customDataChange(data,selectedReg,label,selectedQuestion);
+    },
+    dataBarPointSelection(
+      event,
+      chartContext,
+      config,
+      selectedQuestion,
+      selectedReg
+    ) {
+      let data = config.w.config.series[config.seriesIndex].data[0];
+      let label = config.w.config.series[config.seriesIndex].name;
+      this.customDataChange(data,selectedReg,label,selectedQuestion)
+    },
+    getPieChartOptions(labels) {
+      let piechartOpt = Object.assign({}, this.piechartOptions);
       piechartOpt.labels = labels;
-      if(labels[0]=="Нет данных"){
-        piechartOpt.colors = ['#ccc'];
+      if (labels[0] == "Нет данных") {
+        piechartOpt.colors = ["#ccc"];
       }
       return piechartOpt;
     },
-    getBarSeries(labels,series){
+    getBarSeries(labels, series) {
       let temp = [];
-      for(let i=0;i<labels.length;i++){
+      for (let i = 0; i < labels.length; i++) {
         let tempItem = {};
-        tempItem['name'] = labels[i];
-        tempItem['data'] = [series[i]];
+        tempItem["name"] = labels[i];
+        tempItem["data"] = [series[i]];
         temp.push(tempItem);
       }
       return temp;
     },
-    oneQuestionChange(oneQues){
-      this.$emit("oneQuesChange",oneQues);
+    oneQuestionChange(oneQues) {
+      this.$emit("oneQuesChange", oneQues);
+    },
+    customDataChange(data,region,label, question) {
+      this.$emit("customDataChange", data,region,label, question);
     },
     // getreg() {
     //   console.log(this.selectedReg);
@@ -319,12 +370,11 @@ export default {
   created() {
     //this.getMessage();
   },
-  mounted() {
-  },
+  mounted() {},
 };
 </script>
 <style>
-p{
+p {
   margin: 0;
 }
 .info-header {
@@ -353,7 +403,6 @@ p{
   column-gap: 15px;
   padding: 0;
 }
-
 
 .info-list li {
   padding-bottom: 5px;
@@ -421,7 +470,7 @@ p{
 
 .toMap__link {
   text-decoration: underline;
-  cursor:pointer;
+  cursor: pointer;
   color: #ffc0cb;
 }
 .toMap__link:hover {

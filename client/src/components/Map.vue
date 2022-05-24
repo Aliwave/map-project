@@ -24,14 +24,37 @@
           @mouseleave="showName('')"
         >
         </l-polygon>
-        <l-control v-if="data[this.question]!==undefined" position="bottomleft" ref="mapLegend" disableScrollPropagation="true">
-          <div class="legend">
-            <h4>{{question}}</h4>
-            <div v-for="(value,index) in data[this.question]['Вся область'].labels" :key="index">
-              <i :style="`background: ${colors[index]}`"></i><span>{{value}}</span><br>
+        <l-control
+          v-if="data[this.question] !== undefined"
+          position="bottomleft"
+          ref="mapLegend"
+          :disableScrollPropagation="true"
+        >
+          <div v-if="customdataLength == 0" class="legend">
+            <!-- показать/скрыть легенду??? -->
+            <h4>{{ question }}</h4>
+            <div
+              v-for="(value, index) in data[this.question]['Вся область']
+                .labels"
+              :key="index"
+            >
+              <i :style="`background: ${colors[index]}`"></i
+              ><span>{{ value }}</span
+              ><br />
             </div>
-            
           </div>
+          <!-- <div v-else class="legend">
+            <h4>customData</h4>
+            <div
+              v-for="(value, index) in data[this.question]['Вся область']
+                .labels"
+              :key="index"
+            >
+              <i :style="`background: ${colors[index]}`"></i
+              ><span>{{ value }}</span
+              ><br />
+            </div>
+          </div> -->
         </l-control>
       </l-map>
     </div>
@@ -159,56 +182,76 @@ export default {
       },
       map: null,
       coordsReg: {
-        "ЗАТО Первомайский":[59.066419, 49.289217],
-        "Свечинский район":[58.31021, 47.579042],
-        "Кикнурский район":[57.34431, 47.010453],
-        "Сунский район":[57.840365, 50.029674],
-        "Опаринский район":[59.734253, 47.73285],
-        "Подосиновский район":[60.216626, 47.252207],
-        "Пижанский район":[57.419815, 48.471736],
-        "Оричевский район":[58.329683, 48.930272],
-        "Куменский район":[58.121419, 49.982991],
-        "г. Котельнич":[58.302995, 48.319589],
-        "Орловский район":[58.702629, 48.72439],
-        "Даровской район":[59.068802, 47.686161],
-        "Верхошижемский район":[57.984808, 49.092291],
-        "Верхнекамский район":[59.899958, 52.679556],
-        "Афанасьевский район":[58.852121, 53.402029],
-        "г. Киров":[58.588299, 49.493535],
-        "Юрьянский район":[59.023595, 48.922109],
-        "Белохолуницкий район":[59.019354, 51.072924],
-        "Котельничский район":[57.978983, 47.977148],
-        "Арбажский район":[57.756938, 48.28354],
-        "Тужинский район":[57.568888, 47.719134],
-        "г. Вятские Поляны":[56.233142, 51.059474],
-        "г. Кирово-Чепецк":[58.539774, 50.001871],
-        "г. Слободской":[58.723668, 50.201684],
-        "Советский район":[57.508447, 48.93577],
-        "Омутнинский район":[58.729728, 52.218458],
-        "Унинский район":[57.620405, 51.485407],
-        "Богородский район":[57.809651, 50.776884],
-        "Зуевский район":[58.372918, 51.023483],
-        "Фаленский район":[58.061897, 51.572728],
-        "Немский район":[57.548261, 50.40853],
-        "Кильмезский район":[57.025784, 51.051089],
-        "Лебяжский район":[57.313174, 49.422578],
-        "Уржумский район":[57.010833, 49.94703],
-        "Нолинский район":[57.599807, 49.724752],
-        "Санчурский район":[56.941978, 47.268686],
-        "Нагорский район":[59.619158, 50.762036],
-        "Мурашинский район":[59.419933, 48.768273],
-        "Лузский район":[60.757818, 47.875677],
-        "Яранский район":[57.17497, 47.8949],
-        "Малмыжский район":[56.556455, 50.694009],
-        "Вятскополянский район":[56.182254, 51.25171],
-        "Шабалинский район":[58.251727, 46.708323],
-        "Слободской район":[58.908901, 50.064315],
-        "Кирово-Чепецкий район":[58.362835, 50.309529],
+        "ЗАТО Первомайский": [59.066419, 49.289217],
+        "Свечинский район": [58.31021, 47.579042],
+        "Кикнурский район": [57.34431, 47.010453],
+        "Сунский район": [57.840365, 50.029674],
+        "Опаринский район": [59.734253, 47.73285],
+        "Подосиновский район": [60.216626, 47.252207],
+        "Пижанский район": [57.419815, 48.471736],
+        "Оричевский район": [58.329683, 48.930272],
+        "Куменский район": [58.121419, 49.982991],
+        "г. Котельнич": [58.302995, 48.319589],
+        "Орловский район": [58.702629, 48.72439],
+        "Даровской район": [59.068802, 47.686161],
+        "Верхошижемский район": [57.984808, 49.092291],
+        "Верхнекамский район": [59.899958, 52.679556],
+        "Афанасьевский район": [58.852121, 53.402029],
+        "г. Киров": [58.588299, 49.493535],
+        "Юрьянский район": [59.023595, 48.922109],
+        "Белохолуницкий район": [59.019354, 51.072924],
+        "Котельничский район": [57.978983, 47.977148],
+        "Арбажский район": [57.756938, 48.28354],
+        "Тужинский район": [57.568888, 47.719134],
+        "г. Вятские Поляны": [56.233142, 51.059474],
+        "г. Кирово-Чепецк": [58.539774, 50.001871],
+        "г. Слободской": [58.723668, 50.201684],
+        "Советский район": [57.508447, 48.93577],
+        "Омутнинский район": [58.729728, 52.218458],
+        "Унинский район": [57.620405, 51.485407],
+        "Богородский район": [57.809651, 50.776884],
+        "Зуевский район": [58.372918, 51.023483],
+        "Фаленский район": [58.061897, 51.572728],
+        "Немский район": [57.548261, 50.40853],
+        "Кильмезский район": [57.025784, 51.051089],
+        "Лебяжский район": [57.313174, 49.422578],
+        "Уржумский район": [57.010833, 49.94703],
+        "Нолинский район": [57.599807, 49.724752],
+        "Санчурский район": [56.941978, 47.268686],
+        "Нагорский район": [59.619158, 50.762036],
+        "Мурашинский район": [59.419933, 48.768273],
+        "Лузский район": [60.757818, 47.875677],
+        "Яранский район": [57.17497, 47.8949],
+        "Малмыжский район": [56.556455, 50.694009],
+        "Вятскополянский район": [56.182254, 51.25171],
+        "Шабалинский район": [58.251727, 46.708323],
+        "Слободской район": [58.908901, 50.064315],
+        "Кирово-Чепецкий район": [58.362835, 50.309529],
       },
       charts: {},
+      customdataLength: Object.keys(this.customdata).length,
     };
   },
-  props: ["geojson", "selectedReg", "selectedQuestions", "data", "mapkey", "question","colors"],
+  // props: [
+  //   "geojson",
+  //   "selectedReg",
+  //   "selectedQuestions",
+  //   "data",
+  //   "mapkey",
+  //   "question",
+  //   "colors",
+  //   "customdata",
+  // ],
+  props: {
+    geojson: Object,
+    selectedReg: Array,
+    selectedQuestions: Array,
+    data: Object,
+    mapkey: Number,
+    question: String,
+    colors: Array,
+    customdata: Object,
+  },
   watch: {},
   computed: {},
   methods: {
@@ -217,54 +260,159 @@ export default {
     // },
     getColor(polygon) {
       let regName = polygon.properties.name;
-      if(this.data[this.question][regName].labels[0]=== "Нет данных"){
+      if (this.data[this.question] == undefined) {
+        return this.colors[0];
+      }
+      if (this.data[this.question][regName].labels[0] === "Нет данных") {
         return "black";
       }
-      this.data[this.question][regName]
+      this.data[this.question][regName];
       let regionData = this.data[this.question][regName];
-      let maxItemIndex = regionData.data.indexOf(Math.max.apply(null,regionData.data));
+      let maxItemIndex = regionData.data.indexOf(
+        Math.max.apply(null, regionData.data)
+      );
       return this.colors[maxItemIndex];
     },
-    getPopUpDiv(key,data,labels){
-      let str = '<p style="margin:0;">'+key+'</p>';
+    getPopUpDiv(key, data, labels) {
+      let str = '<p style="margin:0;">' + key + "</p>";
       for (let i = 0; i < data.length; i++) {
-        let color = labels[0]!="Нет данных" ? this.colors[i] : "transparent";
-        str += '<div>'+
-          '<div style="display:inline-block;width: 10px;height:10px;margin-right: 5px;'+
-          'background-color:'+color+'">'+
-          '</div><span class="popup__label">'+data[i]+'</span></div>';
+        let color = labels[0] != "Нет данных" ? this.colors[i] : "#ccc";
+        str +=
+          "<div>" +
+          '<div style="display:inline-block;width: 10px;height:10px;margin-right: 5px;' +
+          "background-color:" +
+          color +
+          '">' +
+          '</div><span class="popup__label">' +
+          data[i] +
+          "</span></div>";
       }
       return str;
     },
-    
+    getCustomTooltip(key, data, labels) {
+      let str = '<p style="margin:0;">' + key + "</p>";
+      for (let i = 0; i < data.length; i++) {
+        let color = labels[0] != "Нет данных" ? this.colors[i] : "#ccc";
+        str +=
+          "<div>" +
+          '<div style="display:inline-block;width: 10px;height:10px;margin-right: 5px;' +
+          "background-color:" +
+          this.colors[i] +
+          '">' +
+          '</div><span class="popup__label">' +
+          labels[i] +
+          " " +
+          data[i] +
+          "</span></div>";
+      }
+      return str;
+    },
+
     doSomethingOnReady() {
       // var chart = new ApexCharts(this.$refs["leaflet-icon"],this.piechartOptions);
       // chart.render();
       this.map = this.$refs.map.mapObject;
-      for (const [key,value] of Object.entries(this.coordsReg)) {
+      for (const [key, value] of Object.entries(this.coordsReg)) {
         this.charts[key] = L.minichart(value, {
           type: "pie",
-          data: this.data[this.question][key].data,
-          colors:this.colors,// this.data[this.question][key].labels[0]!="Нет данных" ? this.chartsColors : "rgba(255, 255, 255,0);",
-          width: this.data[this.question][key].labels[0]!="Нет данных" ? 25 : 0,
-        }).bindPopup(this.getPopUpDiv(key,this.data[this.question][key].data,this.data[this.question][key].labels))
-        .bindTooltip('<div style="font-family: "Circe", Helvetica, Arial, sans-serif;">'+key+'</div>');
+          data:
+            this.data[this.question] != undefined
+              ? this.data[this.question][key].data
+              : [0],
+          colors: this.colors, // this.data[this.question][key].labels[0]!="Нет данных" ? this.chartsColors : "rgba(255, 255, 255,0);",
+          width:
+            this.data[this.question][key].labels[0] != "Нет данных" ? 25 : 0,
+        })
+          .bindPopup(()=> {
+            if (this.data[this.question] !== undefined) {
+              return this.getPopUpDiv(
+                key,
+                this.data[this.question][key].data,
+                this.data[this.question][key].labels
+              );
+            }else{
+              return "no data"
+            }
+          })
+          .bindTooltip("<div>" + key + "</div>");
         this.map.addLayer(this.charts[key]);
       }
     },
-    updateMap(oneQues){
-      for (const [key,value] of Object.entries(this.coordsReg)) {
+    updateMap(oneQues) {
+      for (const [key, value] of Object.entries(this.coordsReg)) {
         this.charts[key].setOptions({
-          data:this.data[oneQues][key].data,
-          colors: this.data[oneQues][key].labels[0]!="Нет данных" ? this.colors : "red",
-          width: this.data[oneQues][key].labels[0]!="Нет данных" ? 25 : 0,
+          data: this.data[oneQues] != undefined
+              ? this.data[oneQues][key].data
+              : [0],
+          colors: this.data[oneQues] != undefined ?
+            (this.data[oneQues][key].labels[0] != "Нет данных"
+              ? this.colors
+              : "red")
+              : 'black',
+          width: this.data[oneQues] != undefined ? (this.data[oneQues][key].labels[0] != "Нет данных" ? 25 : 0) : 0,
+        });
+        this.charts[key].setPopupContent(()=> {
+            if (this.data[oneQues] !== undefined) {
+              return this.getPopUpDiv(
+                key,
+                this.data[oneQues][key].data,
+                this.data[oneQues][key].labels
+              );
+            }else{
+              return "no data"
+            }
           });
-        this.charts[key].setPopupContent(this.getPopUpDiv(key,this.data[oneQues][key].data,this.data[oneQues][key].labels));
+        this.charts[key].setTooltipContent(
+          "<div>" + key + "</div>"
+        )
         //this.charts[key].setTooltipContent(this.getPopUpDiv(key,this.data[oneQues][key].data));
         this.$refs.map.mapObject.addLayer(this.charts[key]);
       }
     },
-
+    updateMapOnCustomData(customData) {
+      // console.log(customData);
+      for (const [key, value] of Object.entries(this.coordsReg)) {
+        // console.log(key);
+        // console.log(key in customData);
+        // console.log(key in this.customdata);
+        if (key in customData) {
+          this.charts[key].setOptions({
+            data: customData[key].data,
+            colors: this.colors,
+            width: 25,
+          });
+          this.charts[key].setPopupContent(
+            this.getPopUpDiv(key, customData[key].data, customData[key].labels)
+          );
+          this.charts[key].setTooltipContent(
+            this.getCustomTooltip(
+              key,
+              customData[key].data,
+              customData[key].labels
+            )
+          );
+        } else {
+          this.charts[key].setOptions({
+            width: 0,
+          });
+          this.charts[key].setPopupContent(this.getPopUpDiv(key, [""], [""]));
+        }
+        // this.charts[key].setOptions({
+        //   data: this.customdata[key],
+        //   colors:
+        //     this.data[oneQues][key].labels[0] != "Нет данных"
+        //       ? this.colors
+        //       : "red",
+        //   width: this.data[oneQues][key].labels[0] != "Нет данных" ? 25 : 0,
+        // });
+        //this.charts[key].setTooltipContent(this.getPopUpDiv(key,this.data[oneQues][key].data));
+        this.$refs.map.mapObject.addLayer(this.charts[key]);
+      }
+      // console.log(Object.keys(this.customdata).length);
+      // if (Object.keys(this.customdata).length === 0) {
+      //   console.log("emp[ty");
+      // }
+    },
     chartHide() {
       this.chartLegend = "";
     },
@@ -274,7 +422,7 @@ export default {
         this.chartLegend =
           document.querySelector(".apexcharts-legend").innerHTML;
       }, 300);
-      console.log(e.target);
+      // console.log(e.target);
     },
     showName(name) {
       if (window.timer) clearTimeout(window.timer);
@@ -307,7 +455,6 @@ export default {
       piechartOpt.labels = labels;
       return piechartOpt;
     },
-
   },
   async created() {},
   mounted() {
@@ -327,18 +474,18 @@ export default {
   z-index: 9999999;
 }
 
-.popup__color{
-  display:inline-block;
+.popup__color {
+  display: inline-block;
   width: 10px;
-  height:10px;
+  height: 10px;
   margin-right: 5px;
 }
 /* .popup__label {
 
 } */
-p{
+p {
   padding: 0;
-  margin:0;
+  margin: 0;
 }
 
 .legend {
@@ -351,6 +498,7 @@ p{
   line-height: 20px;
   color: #555;
   max-height: 300px;
+  max-width: 530px;
   overflow-y: scroll;
 }
 .legend h4 {

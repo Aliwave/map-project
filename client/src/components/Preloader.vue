@@ -26,12 +26,14 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 .container {
   width: 100%;
   height:100%;
   margin: 0 auto;
-	position:absolute;
+	position:fixed;
+  top:0;
+  left:0;
 	background-color: #282b38;
 	z-index: 99999999;
 	text-align: center;

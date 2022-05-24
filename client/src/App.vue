@@ -5,26 +5,34 @@
     </transition>
     <div class="menu-container">
       <!-- <button @click="showMain()" class="toggleSidebar">Вопросы</button> -->
-      <button @click="showQuesList = !showQuesList;" class="toggleSidebar">Вопросы</button>
-      <!-- <div>
+      <button @click="showQuesList = !showQuesList" class="toggleSidebar">
+        Вопросы
+      </button>
+      <div>
         <label
-          >File
+          >Выберите файл с данными опроса(формат xlsx):
           <input
             class="mainupload-btn"
             type="file"
             ref="file"
             name="file"
             id="file"
+            accept=".xlsx"
           />
-          <button @click="submitFile()">Submit</button>
+          <button @click="submitFile()">Отправить</button>
         </label>
-        {{ msg }}
-      </div> -->
-      <button @click="showRegionList = !showRegionList;" class="toggleSidebar">Районы</button>
+      </div>
+      <button @click="showRegionList = !showRegionList" class="toggleSidebar">
+        Районы
+      </button>
     </div>
     <div class="map-container">
       <transition name="fade">
-        <Questions v-if="showQuesList" :queslist="queslist" @selectQ="selectQues"></Questions>
+        <Questions
+          v-if="showQuesList"
+          :queslist="queslist"
+          @selectQ="selectQues"
+        ></Questions>
       </transition>
 
       <Map
@@ -36,9 +44,14 @@
         :question="oneQuestion"
         ref="mapComp"
         :colors="chartColors"
+        :customdata="customData"
       ></Map>
       <transition name="fade">
-        <Regions v-if="showRegionList" :regions="regdata" @selectR="selectionRegionList"></Regions>
+        <Regions
+          v-if="showRegionList"
+          :regions="regdata"
+          @selectR="selectionRegionList"
+        ></Regions>
       </transition>
     </div>
     <InfoPanel
@@ -47,9 +60,13 @@
       :selectedQues="selectedQuestions"
       :regions="regdata"
       :data="mainData"
-      :mapkey="mapkey"
       @oneQuesChange="oneQuestionChangeMain"
       :colors="chartColors"
+      @customDataChange="customDataChange"
+      :mapkey="mapkey"
+      :chartkey="chartkey"
+      :multiple="multiple"
+      ref="infopanel"
     ></InfoPanel>
     <div></div>
     <!-- <Ping></Ping> -->
@@ -66,7 +83,6 @@ import Questions from "./components/Questions";
 import Regions from "./components/Regions";
 import InfoPanel from "./components/InfoPanel";
 import Preloader from "./components/Preloader";
-
 
 export default {
   components: { Map, Ping, MainMenu, Regions, Questions, InfoPanel, Preloader },
@@ -86,7 +102,7 @@ export default {
       showQuesList: true,
       showRegionList: true,
       mainData: {},
-      chartColors:[
+      chartColors: [
         "#86007e",
         "#588539",
         "#cc9915",
@@ -138,78 +154,122 @@ export default {
         "#d68b26",
         "#282f2b",
       ],
+      customData: {},
+      multiple: false,
+      chartkey: 0,
+      msg1: ""
     };
   },
   methods: {
+    async getid() {
+      const path = process.env.SERVER_URL + "/api/session";
+      await axios
+        .get(path)
+        .then((res) => {
+          this.msg = res.data;
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    },
+        async getid1() {
+      const path = process.env.SERVER_URL + "/api/session1";
+      await axios
+        .get(path)
+        .then((res) => {
+          console.log(res.data);
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    },
     // forceRender(){
     //   this.mapkey +=1;
     // },
-    showMain(){
-      //this.mainData[0].question получение вопроса
-      //this.mainData[0].regions[0].name получение названия региона
-      //this.mainData[0].regions[0].labels получение вариантов ответа
-      //this.mainData[0].regions[0].data получение данных
-      console.log(this.mainData[0].regions.length);
-      console.log(this.mainData.length);
-    },
+    // showMain(){
+    //   //this.mainData[0].question получение вопроса
+    //   //this.mainData[0].regions[0].name получение названия региона
+    //   //this.mainData[0].regions[0].labels получение вариантов ответа
+    //   //this.mainData[0].regions[0].data получение данных
+    //   console.log(this.mainData[0].regions.length);
+    //   console.log(this.mainData.length);
+    // },
     async submitFile() {
+      this.preloader = true;
       this.file = this.$refs.file.files[0];
       let formData = new FormData();
       formData.append("file", this.file);
       await axios
-        .post(process.env.VUE_APP_ROOT+"/uploaddb", formData, {
+        .post(process.env.SERVER_URL + "/api/uploaddb", formData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
         })
         .then((res) => {
-          console.log(res);
-          this.msg = res.data.msg;
+          this.msg1 = res.data.msg;
           let queslist = [];
+          this.selectedQuestions = [];
           res.data.queslist.forEach((question, index) => {
             if (index == 0) {
               this.selectedQuestion = question;
               queslist.push({ id: index, question: question, selected: true });
+              this.selectedQuestions.push(question);
               return;
             }
             queslist.push({ id: index, question: question, selected: false });
+            
           });
           this.queslist = queslist;
+          this.mainData = {};
+          // this.selectQues(this.selectedQuestion,true);
+          // this.oneQuestionChangeMain(this.selectedQuestion);
+          this.getData(this.regdata, this.selectedQuestions);
+          //this.$refs.mapComp.updateMapOnCustomData(this.customData);
+          this.oneQuestionChangeMain(this.selectedQuestion);
         })
         .catch((error) => {
           // eslint-disable
           console.log(error);
         });
-      console.log(this.queslist);
+        this.preloader =false;
     },
 
     async getData(Region, Question) {
-      const path = process.env.SERVER_URL+"/api/data";
+      const path = process.env.SERVER_URL + "/api/data";
       const data = { selectedQuestions: Question, selectedRegions: Region };
       await axios
-        .post(path, data, { headers: { "Access-Control-Allow-Origin": "*" } })
+        .post(path, data)
         .then((response) => {
-          this.mainData[this.selectedQuestions[this.selectedQuestions.length-1]] = response.data;
+          this.mainData[
+            this.selectedQuestions[this.selectedQuestions.length - 1]
+          ] = response.data;
           this.mapkey++;
-          console.log(this.mainData);
-          })
+          //console.log(this.mainData);
+        })
         .catch((error) => console.log(error));
     },
 
-    selectQues(element, selected) {
+    async selectQues(element, selected) {
       if (selected == true) {
         this.selectedQuestions.push(element);
-        this.mapkey++;
-        
+        //this.mapkey++;
       } else {
         this.selectedQuestions.splice(
           this.selectedQuestions.indexOf(element),
           1
         );
-        this.mapkey--;
+        if (this.selectedRegions[0] == "Вся область") {
+          //this.customData[region].data.splice(this.customData[region].labels.indexOf(queslabel),1);
+          this.customData.forEach(function (value) {});
+        } else {
+        }
+        //console.log(this.mainData[element]);
+        //this.mapkey--;
       }
-      if(this.mainData[element]===undefined){
-        this.getData(this.regdata,this.selectedQuestions);
+      if (this.mainData[element] === undefined) {
+        this.preloader = true;
+        await this.getData(this.regdata, this.selectedQuestions);
+        this.preloader = false;
       }
     },
 
@@ -224,6 +284,10 @@ export default {
         this.geodata.features.forEach((obj) => {
           obj.properties.selected = false;
         });
+        this.multiple = false;
+        this.customData = {};
+        this.$refs.mapComp.updateMapOnCustomData(this.customData);
+        this.mapkey++;
       } else {
         this.regdata.forEach((obj) => {
           if (obj.region == element) {
@@ -242,9 +306,25 @@ export default {
           this.regdata.filter((value) => value.selected == true).length == 0
         ) {
           this.regdata[0].selected = true;
+          this.multiple = false;
+          this.customData = {};
+          this.mapkey++;
+          this.$refs.mapComp.updateMapOnCustomData(this.customData);
         }
+        if (this.regdata.filter((value) => value.selected == true).length > 1) {
+          this.multiple = true;
+          this.mapkey++;
+        }
+        // this.customData = {};
+        // this.$refs.mapComp.updateMapOnCustomData(this.customData);
       }
-      this.selectedRegions = this.regdata.filter((value)=>value.selected == true);
+      this.selectedRegions = this.regdata.filter(
+        (value) => value.selected == true
+      );
+      if (selected == false) {
+        delete this.customData[element];
+        this.$refs.mapComp.updateMapOnCustomData(this.customData);
+      }
       // this.regdata.forEach((obj)=>{
       //   if(obj.selected == true){
       //     this.selectedRegions.push(obj.region);
@@ -252,16 +332,73 @@ export default {
       // });
       // this.mapkey++;
       // this.getData(this.selectedRegions, this.selectedQuestions);
+      this.chartkey++;
     },
-    oneQuestionChangeMain(oneQues){
+    oneQuestionChangeMain(oneQues) {
       this.oneQuestion = oneQues;
-      console.log(this.oneQuestion);
+      // console.log(this.oneQuestion);
       this.$refs.mapComp.updateMap(oneQues);
-    }
+    },
+    addRegionToCustom(data, region, queslabel) {
+      if (this.customData[region] === undefined) {
+        //создаем регион если не было
+        this.customData[region] = {
+          labels: [],
+          data: [],
+        };
+        this.customData[region].labels.push(queslabel);
+        this.customData[region].data.push(data);
+      } else {
+        if (this.customData[region].labels.indexOf(queslabel) === -1) {
+          //добавляем данные если не было
+          this.customData[region].labels.push(queslabel);
+          this.customData[region].data.push(data);
+        } else {
+          //удаляем данные если пришло заново
+          this.customData[region].data.splice(
+            this.customData[region].labels.indexOf(queslabel),
+            1
+          );
+          this.customData[region].labels.splice(
+            this.customData[region].labels.indexOf(queslabel),
+            1
+          );
+          //удаляем регион из списка, если все данные пусты
+          if (this.customData[region].labels.length === 0) {
+            delete this.customData[region];
+          }
+        }
+      }
+    },
+    customDataChange(data, region, label, question) {
+      let queslabel = question + " / " + label;
+      if (region === "Вся область") {
+        this.regdata.forEach((element) => {
+          if (
+            this.mainData[question][element.region].labels.indexOf(label) !== -1
+          ) {
+            let dataIndex =
+              this.mainData[question][element.region].labels.indexOf(label);
+            let regionData =
+              this.mainData[question][element.region].data[dataIndex];
+            let labelData =
+              this.mainData[question][element.region].labels[dataIndex];
+            this.addRegionToCustom(regionData, element.region, queslabel);
+          }
+          //console.log(element.region);
+        });
+        //console.log(this.mainData);
+      } else {
+        this.addRegionToCustom(data, region, queslabel);
+      }
+      Object.keys(this.customData);
+      this.$refs.mapComp.updateMapOnCustomData(this.customData);
+    },
   },
-  async created() {
+  computed: {},
+  created: async function () {
     //получение данных и их обработка👌
-    const path = process.env.SERVER_URL+"/api/regions";
+    const path = process.env.SERVER_URL + "/api/regions";
     let regions = [];
     await axios
       .get(path)
@@ -271,7 +408,7 @@ export default {
       .catch((error) => {
         console.log(error);
       });
-    const path1 = process.env.SERVER_URL+"/api/questions";
+    const path1 = process.env.SERVER_URL + "/api/questions";
     let questions = [];
     await axios
       .get(path1)
@@ -281,7 +418,7 @@ export default {
       .catch((error) => {
         console.log(error);
       });
-    const path2 = process.env.SERVER_URL+"/api/geojson";
+    const path2 = process.env.SERVER_URL + "/api/geojson";
     let geodata = [];
     await axios
       .get(path2)
@@ -295,7 +432,11 @@ export default {
     regions.forEach((region, index) => {
       //быть может стоит перенести обработку на сервер 🤔
       if (region == "Вся область") {
-        this.selectedRegions.push({ id: index, region: region, selected: true });
+        this.selectedRegions.push({
+          id: index,
+          region: region,
+          selected: true,
+        });
         reglist.push({ id: index, region: region, selected: true });
         return;
       }
@@ -315,7 +456,7 @@ export default {
       queslist.push({ id: index, question: question, selected: false });
     });
     this.queslist = queslist;
-    await this.getData(this.regdata,this.selectedQuestions);
+    await this.getData(this.regdata, this.selectedQuestions);
     geodata = JSON.parse(geodata);
     geodata.features.forEach((obj) => {
       switch (obj.properties.name) {
@@ -348,14 +489,10 @@ export default {
       obj.properties["color"] = "blue";
       obj.properties["weight"] = 1;
     });
-    this.geodata = geodata;  
+    this.geodata = geodata;
     this.preloader = false;
   },
-  mounted(){
-    this.$nextTick(()=>{
-      this.mapkey++;
-    });
-  }
+  mounted() {},
 };
 </script>
 
@@ -364,7 +501,7 @@ export default {
 /*@import url('../static/normalize.css');*/
 html {
   width: 100vw;
-  /* overflow-x: hidden; */
+  overflow-x: hidden;
   /* overflow-y:hidden; */
 }
 .fade-enter-active,
@@ -411,9 +548,9 @@ body {
   overflow-y: scroll;
   max-height: 590px;
   position: absolute;
-  display:block;
-  z-index:99999;
-  background-color:#282b38;
+  display: block;
+  z-index: 99999;
+  background-color: #282b38;
 }
 
 .sidebar h2 {
@@ -463,12 +600,12 @@ input[type="radio"] {
   color: #0b7c92;
 }
 
-.regionscontainer{
-  top:0;
-  right:0;
+.regionscontainer {
+  top: 0;
+  right: 0;
 }
 .quescontainer {
-  top:0;
-  left:0;
+  top: 0;
+  left: 0;
 }
 </style>
