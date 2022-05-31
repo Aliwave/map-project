@@ -1,6 +1,6 @@
 # Client
 
-> folder client
+> folder frontend
 
 ## Build Setup
 
@@ -16,6 +16,7 @@ npm run dev
 
 # build for production with minification
 npm run build
+dist folder in the same folder as app.py
 
 # build for production and view the bundle analyzer report
 npm run build --report

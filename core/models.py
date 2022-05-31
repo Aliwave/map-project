@@ -63,7 +63,6 @@ class DBUpload:
 			queslist[i] = re.sub(r'(\s\/\/\s.*)','',queslist[i])
 		queslist = sorted(set(queslist), key=lambda d: queslist.index(d))
 		queslist.pop(queslist.index("Где проживаете?"))
-		print(queslist)
 		return queslist
 		# table1 = pd.read_json(self.filename,orient="split")
 		# table1 = table1.fillna("")
@@ -130,7 +129,7 @@ class DefaultData:
 	"Кирово-Чепецкий район"
 	]
 	__path = os.path.dirname(os.path.dirname(__file__))+"/uploads/remaster.json"
-	__geojson = gpd.read_file(os.path.dirname(os.path.dirname(__file__))+"/backend/regions.geojson", encoding="utf-8")
+	__geojson = gpd.read_file(os.path.dirname(os.path.dirname(__file__))+"/static/regions.geojson", encoding="utf-8")
 	__maintable = pd.read_json(__path,orient="split")
 	
 	@staticmethod
@@ -146,7 +145,6 @@ class DefaultData:
 			queslist[i] = re.sub(r'(\s\/\/\s.*)','',queslist[i])
 		queslist = sorted(set(queslist), key=lambda d: queslist.index(d))
 		queslist.pop(queslist.index("Где проживаете?"))
-		print(queslist)
 		return queslist
 
 	@staticmethod
@@ -164,14 +162,14 @@ class DataGetter:
 	__questions = []
 	__temp = ""
 
-	def __init__(self,request,sessionid="none"):
+	def __init__(self,sessionid="none"):
 		if(os.path.exists(os.path.dirname(os.path.dirname(__file__))+"/uploads/"+sessionid+".json")):
 			self.__maintable = pd.read_json(os.path.dirname(os.path.dirname(__file__))+"/uploads/"+sessionid+".json",orient="split")
 			self.__path = os.path.dirname(os.path.dirname(__file__))+"/uploads/"+sessionid+".json"
 		else:
 			self.__maintable = pd.read_json(self.__path,orient="split")
-		self.__questions = request['selectedQuestions']
-		self.__regions = request['selectedRegions']
+		# self.__questions = request['selectedQuestions']
+		# self.__regions = request['selectedRegions']
 	
 	def _findData(self,ques,reg=""):
 		temp = self.__maintable.copy()
@@ -193,7 +191,7 @@ class DataGetter:
 				data = restable['data'].to_list()
 			else:
 				name = ["Нет данных"]
-				data = [1]
+				data = [0]
 		else: #обработка вопросов с несколькими столбцами ответов
 			restable = pd.DataFrame()
 			for i in mainfilter.columns:
@@ -226,35 +224,63 @@ class DataGetter:
 							data = [0]
 					else:
 						name = ["Нет данных"]
-						data = [1]
+						data = [0]
 				else:
 					name = ["Нет данных"]
-					data = [1]
+					data = [0]
 		mydict = {
 			"labels":name,
 			"data":data
 		}
 		return mydict
 	
-	def getData(self):
+	def getData(self,request):
+		questions = request['selectedQuestions']
+		regions = request['selectedRegions']
 		answer = dict()
 		tempdict = dict()
 		#for ques in self.__questions:
 		tempdata = dict()
 		tempregdata = []
-		for reg in self.__regions:
+		for reg in regions:
 			tempregdict = dict()
 			if(reg['region'] == 'Вся область'):
-				regdata = self._findData(self.__questions[-1])
+				regdata = self._findData(questions[-1])
 			else:
-				regdata = self._findData(self.__questions[-1],reg)
+				regdata = self._findData(questions[-1],reg)
 			tempregdict['labels'] = regdata['labels']
 			tempregdict['data'] = regdata['data']
 			tempdata[reg['region']] = tempregdict
 			tempregdict = dict()
 		#tempdict['regions']=tempregdata
-		answer[self.__questions[-1]]=tempdata
+		answer[questions[-1]]=tempdata
 		jsondata = json.dumps(tempdata,indent=0,ensure_ascii=True,sort_keys=False)
+		return jsondata
+
+	def getCritData(self,request):
+		questions = request['selectedQuestions']
+		regions = request['selectedRegions']
+		data = dict()
+		for reg in regions:
+			if(reg['region'] == 'Вся область'):
+				continue
+			temp = self.__maintable.copy()
+			temp = temp[temp['Где проживаете?'] == reg['region']]
+			fullcount = len(temp)
+			if(fullcount == 0):
+				data[reg['region']] = 0
+				continue
+			for element in questions:
+				mainfilter = temp.filter(like=element) #нахождение кол-ва ответов в столбцах
+				mainfilter = mainfilter.loc[:,~mainfilter.columns.duplicated()] #убираем дубликаты
+				if("//" not in mainfilter.columns[0]):#проверка на множественный вопрос
+					temp = temp[temp[element].isin(questions[element])]
+				else: #обработка вопросов с несколькими столбцами ответов
+					for i in questions[element]:
+						print(i)
+						temp = temp[temp[element+" // "+i] == 1]
+			data[reg['region']] = round((len(temp)/fullcount)*100)
+		jsondata = json.dumps(data,indent=0,ensure_ascii=True,sort_keys=False)
 		return jsondata
 
 	def getSelectedData(self):
@@ -279,6 +305,10 @@ class DataGetter:
 			answer.append(tempdict)
 			tempdict = dict()
 			return json.dumps(answer,indent=4,ensure_ascii=False)
+	
+
+	
+
 	
 	
 

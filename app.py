@@ -57,9 +57,15 @@ def getQuestions():
 @app.route('/api/data', methods=['POST'])
 def getData():
 	requestdata = request.get_json()
-	data = DataGetter(requestdata,session.sid)
-	return data.getData()
+	data = DataGetter(session.sid)
+	return data.getData(requestdata)
 	#return session.sid
+
+@app.route('/api/dataCrit', methods=['POST'])
+def getCritData():
+	requestdata = request.get_json()
+	data = DataGetter(session.sid)
+	return data.getCritData(requestdata)
 
 @app.route('/api/session',methods=['GET'])
 def getSession():
