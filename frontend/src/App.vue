@@ -233,7 +233,6 @@ export default {
           ] = response.data;
           this.mapkey++;
           this.queskey++;
-          console.log(response.data);
         })
         .catch((error) => console.log(error));
     },
@@ -247,8 +246,6 @@ export default {
           if(this.customOnMapBool == true){
             this.$refs.mapComp.updateMapOnCustomData(this.customData);
           }
-          console.log(this.customData);
-          console.log(CritData);
         })
         .catch((error) => console.log(error));
     },

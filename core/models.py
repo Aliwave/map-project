@@ -86,7 +86,7 @@ class DefaultData:
 	"Слободской район",
 	"Кирово-Чепецкий район"
 	]
-	__path = os.path.dirname(os.path.dirname(__file__))+"/uploads/child_remaster.json"
+	__path = os.path.dirname(os.path.dirname(__file__))+"/uploads/default.json"
 	__geojson = gpd.read_file(os.path.dirname(os.path.dirname(__file__))+"/static/regions.geojson", encoding="utf-8")
 	__maintable = pd.read_json(__path,orient="split")
 	
@@ -114,7 +114,7 @@ class DefaultData:
 		return jsonify(DefaultData.__geojson.to_json())
 
 class DataGetter:
-	__path = os.path.dirname(os.path.dirname(__file__))+"/uploads/child_remaster.json"
+	__path = os.path.dirname(os.path.dirname(__file__))+"/uploads/default.json"
 	__maintable = ""
 
 	def __init__(self,sessionid="none"):
