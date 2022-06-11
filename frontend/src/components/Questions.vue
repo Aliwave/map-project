@@ -1,7 +1,6 @@
 <template>
   <div :key="queskey" class="quescontainer sidebar">
     <h2>Вопросы: (<a class="toMap__link" @click="customDataOnMap()">на карту</a>)</h2>
-    <!-- <span class="notification" v-if="Warnin">Выбрано макс. допустимое кол-во вопросов!</span> -->
     <form action="">
       <ul>
         <li v-for="(element, index) in queslist" :key="index">
@@ -33,9 +32,6 @@
             </ul>
           </div>
         </li>
-        <!-- <li><input type="radio" name="questions" id="0"> <label for="0">Test 1</label></li>
-        <li><input type="radio" name="questions" id="1"> <label for="1">Test 2</label></li>
-        <li><input type="radio" name="questions" id="2"> <label for="2">Test 3</label></li> -->
       </ul>
     </form>
   </div>
@@ -51,7 +47,6 @@ export default {
       msg: "",
     };
   },
-  // props: ["queslist", "data","queskey","criteriaData"],
   props: {
     queslist: Array,
     data: Object,
@@ -59,13 +54,6 @@ export default {
     criteriaData: Object
   },
   computed: {
-    // Warnin:function(){
-    //   if (this.queslist.filter((value) => value.selected == true).length == 4) {
-    //     return true;
-    //   } else {
-    //     return false;
-    //   }
-    // }
   },
   methods: {
     disabledQues(element) {
@@ -85,13 +73,6 @@ export default {
         }
       }
     },
-    // showWarn() {
-    //   if (this.queslist.filter((value) => value.selected == true).length == 4) {
-    //     return true;
-    //   } else {
-    //     return false;
-    //   }
-    // },
     selectQuestion(element) {
       element.selected = !element.selected;
       this.$emit("selectQ", element.question, element.selected);
@@ -104,7 +85,6 @@ export default {
     }
   },
   created() {
-    //this.getMessage();
   },
 };
 </script>

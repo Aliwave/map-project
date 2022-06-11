@@ -1,11 +1,12 @@
 <template>
-  <div :key="mapkey" class="maps" style="height: 590px; width: 100%">
+  <div  class="maps" style="height: 590px; width: 100%">
     <div style="height: 590px; width: 100%">
       <l-map
         v-if="geojson"
         class="leaf-map"
         style="height: 590px"
         :zoom="zoom"
+        :key="mapkey"
         :center="center"
         ref="map"
         @ready="doOnReady()"
@@ -30,7 +31,7 @@
           ref="mapLegend"
           :disableScrollPropagation="true"
         >
-          <div v-if="customdataLength == 0" class="legend">
+          <div class="legend">
             <!-- показать/скрыть легенду??? -->
             <h4>{{ question }}</h4>
             <div
@@ -103,27 +104,15 @@ export default {
 
   data() {
     return {
-      chartLegend: null,
-      series: [44, 55, 13, 43, 22],
-      staticAnchor: [51.504, -0.159],
       url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
       attribution:
         '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
       zoom: 6,
       center: [59, 50],
-      // markerLatLng: [51.504, -0.159]
-      regname: null,
-      latLng: null,
-      region: this.selectedReg,
-      color: "blue",
       panel: {
         text: "",
         x: -600,
         y: 0,
-      },
-      position: {
-        lat: 60.504,
-        lng: 40,
       },
       map: null,
       coordsReg: {
@@ -174,7 +163,6 @@ export default {
         "Кирово-Чепецкий район": [58.362835, 50.309529],
       },
       charts: {},
-      customdataLength: Object.keys(this.customdata).length,
       customdatabool: false,
     };
   },
@@ -188,12 +176,7 @@ export default {
     colors: Array,
     customdata: Object,
   },
-  watch: {},
-  computed: {},
   methods: {
-    // con(name) {
-    //   console.log(name);
-    // },
     getColor(polygon) {
       let regName = polygon.properties.name;
       if (this.data[this.question] == undefined) {
@@ -351,21 +334,6 @@ export default {
         this.$refs.map.mapObject.addLayer(this.charts[key]);
       }
       this.customdatabool = true;
-      // console.log(Object.keys(this.customdata).length);
-      // if (Object.keys(this.customdata).length === 0) {
-      //   console.log("emp[ty");
-      // }
-    },
-    chartHide() {
-      this.chartLegend = "";
-    },
-    chartShow(e) {
-      if (window.timer) clearTimeout(window.timer);
-      window.timer = setTimeout(() => {
-        this.chartLegend =
-          document.querySelector(".apexcharts-legend").innerHTML;
-      }, 300);
-      // console.log(e.target);
     },
     showName(name) {
       if (window.timer) clearTimeout(window.timer);
@@ -393,18 +361,10 @@ export default {
       if (polygon.properties.selected) return 3;
       return 1;
     },
-    getPieChartOptions(labels) {
-      let piechartOpt = Object.assign({}, this.piechartOptions);
-      piechartOpt.labels = labels;
-      return piechartOpt;
-    },
   },
   async created() {},
   mounted() {
     window.addEventListener("mousemove", this.mouseIsMoving);
-    // console.log(this.$refs["leaflet-icon"]);
-    // var chart = new ApexCharts(this.$refs["leaflet-icon"],this.piechartOptions);
-    // chart.render();
   },
 };
 </script>

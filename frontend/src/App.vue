@@ -33,7 +33,7 @@
           :queslist="queslist"
           @selectQ="selectQues"
           :data="mainData"
-          :queskey="queskey"
+          :queskey="queskey"  
           @selectCriteria="selectCriteria"
           :criteriaData="criteriaData"
           @customOnMap="customOnMap"
@@ -69,7 +69,6 @@
       :colors="chartColors"
       :mapkey="mapkey"
       :chartkey="chartkey"
-      :multiple="multiple"
       ref="infopanel"
     ></InfoPanel>
     <div></div>
@@ -80,14 +79,13 @@
 /* eslint-disable */
 import axios from "axios";
 import Map from "./components/Map"
-import MainMenu from "./components/MainMenu";
 import Questions from "./components/Questions";
 import Regions from "./components/Regions";
 import InfoPanel from "./components/InfoPanel";
 import Preloader from "./components/Preloader";
 
 export default {
-  components: { Map, MainMenu, Regions, Questions, InfoPanel, Preloader },
+  components: { Map, Regions, Questions, InfoPanel, Preloader },
   name: "App",
   data() {
     return {
@@ -157,9 +155,9 @@ export default {
       ],
       customData: {},
       criteriaData:{},
-      multiple: false,
       chartkey: 0,
       queskey: 0,
+      customOnMapBool: false
     };
   },
   methods: {
@@ -184,6 +182,7 @@ export default {
         }
       }
       this.getCritData(this.criteriaData);
+      this.customOnMapBool = true;
     },
     async submitFile() {
       this.preloader = true;
@@ -234,6 +233,7 @@ export default {
           ] = response.data;
           this.mapkey++;
           this.queskey++;
+          console.log(response.data);
         })
         .catch((error) => console.log(error));
     },
@@ -244,7 +244,11 @@ export default {
         .post(path, data)
         .then((response) => {
           this.customData = response.data;
-          this.$refs.mapComp.updateMapOnCustomData(this.customData);
+          if(this.customOnMapBool == true){
+            this.$refs.mapComp.updateMapOnCustomData(this.customData);
+          }
+          console.log(this.customData);
+          console.log(CritData);
         })
         .catch((error) => console.log(error));
     },
@@ -285,7 +289,6 @@ export default {
         this.geodata.features.forEach((obj) => {
           obj.properties.selected = false;
         });
-        this.multiple = false;
       } else {
         this.regdata.forEach((obj) => {
           if (obj.region == element) {
@@ -304,10 +307,8 @@ export default {
           this.regdata.filter((value) => value.selected == true).length == 0
         ) {
           this.regdata[0].selected = true;
-          this.multiple = false;
         }
         if (this.regdata.filter((value) => value.selected == true).length > 1) {
-          this.multiple = true;
         }
       }
       this.selectedRegions = this.regdata.filter(
@@ -319,6 +320,7 @@ export default {
     oneQuestionChangeMain(oneQues) {
       this.oneQuestion = oneQues;
       this.$refs.mapComp.updateMap(oneQues);
+      this.customOnMapBool = false;
     },
   },
   computed: {},

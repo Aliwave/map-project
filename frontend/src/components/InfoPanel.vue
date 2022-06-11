@@ -4,23 +4,11 @@
       <h2>Статистика:</h2>
     </div>
     <div class="info-lists-wrapper">
-      <!-- Выбор одного вопроса и одного района или Выбор одного вопроса и всей области -->
-      <!-- <div v-if="data.length == 1 && data[0].regions.length == 1" class="info-list-block"> 
-        <div id="chart">
-          <p>{{data[0].question}}</p>
-          <apexchart type="pie" width="1200px" height="240px"
-          :options="getPieChartOptions(data[0].regions[0].labels)" 
-          :series="data[0].regions[0].data"></apexchart>
-        </div>
-      </div> -->
-
-      <!-- Выбор одного вопроса и одного района или Выбор одного вопроса и всей области -->
       <div
         v-if="
           selectedQues.length >= 1 &&
           selectedReg.length == 1 &&
-          data !== undefined && 
-          selectedReg[0].region == 'Вся область'
+          data !== undefined
         "
         class="info-list-block"
       >
@@ -42,50 +30,8 @@
           ></apexchart>
         </div>
       </div>
-
-      <!-- Выбор нескольких вопросов и одного района или Выбор нескольких вопросов и всей области -->
       <div
-        v-if="
-          selectedQues.length >= 1 &&
-          selectedReg.length == 1 &&
-          data !== undefined && 
-          selectedReg[0].region != 'Вся область'
-        "
-        class="info-list-block"
-      >
-        <div v-for="(elem, index) in selectedQues" :key="index" id="chart">
-          <p v-if="data[elem] !== undefined">
-            {{ elem }} (<a class="toMap__link" @click="oneQuestionChange(elem)"
-              >на карту</a
-            >)
-          </p>
-          <apexchart
-            v-if="data[elem] !== undefined"
-            type="pie"
-            :width="`${1200}px`"
-            height="290px"
-            :options="
-              getPieChartOptions(data[elem][selectedReg[0].region].labels)
-            "
-            :series="data[elem][selectedReg[0].region].data"
-          ></apexchart>
-        </div>
-      </div>
-      <!-- Выбор одного вопроса и нескольких районов или Выбор нескольких вопросов и нескольких районов
-                  @dataPointSelection="
-              (event, chartContext, config) => {
-                dataPiePointSelection(
-                  event,
-                  chartContext,
-                  config,
-                  elem,
-                  selectedReg[0].region
-                );
-              }
-            "
-       -->
-      <div
-        v-if="selectedReg.length >= 1 && selectedQues.length >= 1 && this.multiple == true"
+        v-if="selectedReg.length > 1 && selectedQues.length >= 1"
         class="info-list-block multi-ques-block"
       >
         <div
@@ -151,19 +97,12 @@ export default {
           },
           offsetX: 0,
           offsetY: 0,
-          // events: {
-          //   dataPointSelection: function (event, chartContext, config) {
-          //     // console.log(
-          //     //   config.w.config.series[config.dataPointIndex].data[0]
-          //     // );
-          //     // console.log(config.w.config.series[config.dataPointIndex].name);
-          //     // console.log(config.w.config.labels[config.dataPointIndex]);
-          //     //console.log("Test");
-          //   },
-          // },
         },
         theme: {
           mode: "dark",
+        },
+        legend:{
+          width: '200px',
         },
         dataLabels: {
           enabled: true,
@@ -197,7 +136,6 @@ export default {
           },
         },
         fill: {
-          //type: "pattern",
           colors: this.colors,
           opacity: 1,
         },
@@ -221,7 +159,7 @@ export default {
         colors: this.colors,
         chart: {
           width: "1200px",
-          // type: "pie",
+          type: "pie",
           background: "#282b38",
           offsetX: -50,
         },
@@ -250,18 +188,15 @@ export default {
         },
         legend: {
           show: true,
-          // position: 'bottom'
         },
         dataLabels: {
           enabled: true,
-          // enabled: false,
         },
         stroke: {
           show: true,
           width: 0,
         },
       },
-      infodata:{},
     };
   },
     props: {
@@ -272,32 +207,8 @@ export default {
     data:Object,
     mapkey:Number,
     colors:Array,
-    multiple:Boolean,
-    chartkey:Number
     },
   methods: {
-    // dataPiePointSelection(
-    //   event,
-    //   chartContext,
-    //   config,
-    //   selectedQuestion,
-    //   selectedReg
-    // ) {
-    //   let data = config.w.config.series[config.dataPointIndex];
-    //   let label = config.w.config.labels[config.dataPointIndex];
-    //   this.customDataChange(data,selectedReg,label,selectedQuestion);
-    // },
-    // dataBarPointSelection(
-    //   event,
-    //   chartContext,
-    //   config,
-    //   selectedQuestion,
-    //   selectedReg
-    // ) {
-    //   let data = config.w.config.series[config.seriesIndex].data[0];
-    //   let label = config.w.config.series[config.seriesIndex].name;
-    //   this.customDataChange(data,selectedReg,label,selectedQuestion)
-    // },
     getPieChartOptions(labels) {
       let piechartOpt = Object.assign({}, this.piechartOptions);
       piechartOpt.labels = labels;
@@ -319,15 +230,8 @@ export default {
     oneQuestionChange(oneQues) {
       this.$emit("oneQuesChange", oneQues);
     },
-    // customDataChange(data,region,label, question) {
-    //   this.$emit("customDataChange", data,region,label, question);
-    // },
-    // getreg() {
-    //   console.log(this.selectedReg);
-    // },
   },
   created() {
-    //this.getMessage();
   },
   mounted() {},
 };
@@ -358,7 +262,6 @@ p {
 .info-list {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
-  /* grid-template-rows: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr; */
   column-gap: 15px;
   padding: 0;
 }
