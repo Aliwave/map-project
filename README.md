@@ -1,38 +1,68 @@
-# Client
+# Исходный код сервиса визуализации опросов по Кировской области с помощью интерактивных карт
 
-> folder frontend
+## Используемые технологии:
 
-## Build Setup
+- HTML
+- CSS
+- JavaScript
+- [VueJS 2](https://v2.vuejs.org/)
+- Python
+- [Flask Framework](https://flask.palletsprojects.com/en/2.1.x/)
+- Pandas
+- GeoPandas
+
+## Установка:
+
+### Фронтенд:
+Исходные файлы фронтенда находятся в папке
+> frontend
+
+### Команды для настройки фронтенда
 
 ``` bash
-# install dependencies
+# установка зависимостей
 npm install
 
-#write your server url in config/dev.env.js and config/prod.env.js
+# необходимо написать домен сервера config/dev.env.js and config/prod.env.js
 SERVER_URL: '"you_url"'
 
-# serve with hot reload at localhost:8080
+# запуск приложения с "горячей" перезагрузкой на localhost:8080
 npm run dev
 
-# build for production with minification
+# сборка фронтенда с минификацией
 npm run build
-dist folder in the same folder as app.py
 
-# build for production and view the bundle analyzer report
+# собранный фронтенд будет находится в папке dist в корне проекта
+
+# сборка фронтенда с отчетом
 npm run build --report
 ```
 
-For a detailed explanation on how things work, check out the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
+Если появились проблемы, возможно помогут эти ссылки:
+ [раз](http://vuejs-templates.github.io/webpack/) и [два](http://vuejs.github.io/vue-loader).
 
-# Server
+### Сервер
 
-> flask
+Исходные файлы фронтенда находятся в папке в корне, а конфигурация и классы для работы с данными в папке
+> core
 
-## Start
+### Команды для настройки сервера
 
 ``` bash
-#install dependencies
+# установка зависимостей
 pip install -r requirements.txt
 
-# start server
+# запуск сервера
 flask run
+```
+
+В папке uploads можно найти примеры электронных таблиц (.xslx) до и после обработки в качестве примеров. Обработка необходима и без нее работать не будет.
+
+Правила форматирования:
+
+- убираем служебную информацию
+- переносим всю таблицу к началу
+- приводим заголовок к одной строке строке
+- в вопросах с множественным выбором (если есть пункты) с бинарными ответами (Да/Нет или 0/1) приводим к одной строке с помощью разделителя, по умолчанию это " // ", можно поменять в файле models.py
+- вопросы, которые нельзя привести к бинарному виду, необходимо разделить на несколько отдельных вопросов, например указывать название вопроса и через знак двоеточия вариант ответа
+- объединяем названия городов и районов в одном столбце, а также изменяет названия в соответствии со списком в файле models.py
